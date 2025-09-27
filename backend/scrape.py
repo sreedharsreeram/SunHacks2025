@@ -2,6 +2,7 @@
 import os
 import json
 import csv
+import asyncio
 from dotenv import load_dotenv
 import arxiv
 from main import get_bot_response
@@ -19,6 +20,10 @@ class SerpAPIScholarScraper:
             raise ValueError(
                 "SerpAPI key is required. Set SERPAPI_KEY environment variable or pass api_key parameter"
             )
+
+    async def search_papers_async(self, query, num_results=10, year_from=None, year_to=None):
+        """Async version of search_papers for parallel execution"""
+        return await asyncio.to_thread(self.search_papers, query, num_results, year_from, year_to)
 
     def search_papers(self, query, num_results=10, year_from=None, year_to=None):
         """Search for papers on Google Scholar using SerpAPI"""
@@ -215,6 +220,85 @@ class SerpAPIScholarScraper:
         print(f"Saved {len(papers)} papers to {filename}")
 
 
+async def arxiv_search_async(query, max_results=3):
+    """Async arXiv search function"""
+    def search_arxiv():
+        search = arxiv.Search(
+            query=query,
+            max_results=max_results,
+            sort_by=arxiv.SortCriterion.SubmittedDate
+        )
+
+        papers = []
+        for result in search.results():
+            papers.append({
+                "title": result.title,
+                "authors": [str(author) for author in result.authors],
+                "year": result.published.year if result.published else None,
+                "venue": "arXiv",
+                "abstract": result.summary,
+                "url": result.entry_id,
+                "pdf_url": result.pdf_url,
+                "citations": 0,  # arXiv doesn't provide citation counts
+                "source": "arXiv"
+            })
+        return papers
+
+    return await asyncio.to_thread(search_arxiv)
+
+
+async def parallel_search(user_query, scholar_results=10, arxiv_results=3):
+    """
+    Perform parallel searches on both Scholar and arXiv
+    """
+    print("Generating search keywords...")
+    keywords = await get_bot_response(user_query)
+    print(f"Keywords: {keywords}")
+
+    print("Starting parallel searches...")
+
+    # Initialize Scholar scraper
+    try:
+        scholar_scraper = SerpAPIScholarScraper()
+    except ValueError as e:
+        print(f"Scholar search unavailable: {e}")
+        scholar_scraper = None
+
+    # Create search tasks
+    tasks = []
+
+    # Add Scholar search task if available
+    if scholar_scraper:
+        scholar_task = scholar_scraper.search_papers_async(keywords, scholar_results)
+        tasks.append(("scholar", scholar_task))
+
+    # Add arXiv search task
+    arxiv_task = arxiv_search_async(keywords, arxiv_results)
+    tasks.append(("arxiv", arxiv_task))
+
+    # Execute searches in parallel
+    if tasks:
+        task_names = [name for name, _ in tasks]
+        task_coroutines = [task for _, task in tasks]
+
+        results = await asyncio.gather(*task_coroutines, return_exceptions=True)
+
+        # Process results
+        search_results = {}
+        for i, (name, result) in enumerate(zip(task_names, results)):
+            if isinstance(result, Exception):
+                print(f"Error in {name} search: {result}")
+                search_results[name] = []
+            else:
+                search_results[name] = result
+                print(f"✅ {name.title()} search completed: {len(result)} papers found")
+
+        return search_results
+    else:
+        print("No search engines available")
+        return {}
+
+
 def main():
     try:
         scraper = SerpAPIScholarScraper()
@@ -304,33 +388,57 @@ def main():
         
 
 
-# Construct the search query
-# You can search by query, id_list, or a combination of both.
-# You can also sort results by relevance, lastUpdatedDate, or submittedDate.
-print ("hello")
-prompt = get_bot_response("RAG question chunking")
-print("prompt: ", prompt)
-search = arxiv.Search(
-  query = prompt,
-  max_results = 3,
-  sort_by = arxiv.SortCriterion.SubmittedDate
-)
+async def demo_parallel_search():
+    """Demonstration of parallel search functionality"""
+    print("🔍 Starting parallel search demo...")
 
-# Iterate through the results and print the details
-for result in search.results():
-  print(f"📄 Title: {result.title}")
-  
-  # Get the first author
-  first_author = result.authors[0]
-  print(f"👤 Author: {first_author}")
-  
-  print(f"📝 Summary: {result.summary}")
-  print(f"🔗 PDF Link: {result.pdf_url}")
-  print("-" * 20) # Separator for readability
+    # Test query
+    user_query = "RAG question chunking"
+
+    # Run parallel search
+    results = await parallel_search(user_query, scholar_results=10, arxiv_results=3)
+
+    # Display results
+    print("\n" + "="*60)
+    print("PARALLEL SEARCH RESULTS")
+    print("="*60)
+
+    for source, papers in results.items():
+        print(f"\n📚 {source.upper()} RESULTS ({len(papers)} papers):")
+        print("-" * 40)
+
+        for i, paper in enumerate(papers, 1):
+            print(f"\n{i}. 📄 {paper['title']}")
+
+            # Display authors
+            if paper["authors"]:
+                authors_str = ", ".join(paper["authors"][:3])
+                if len(paper["authors"]) > 3:
+                    authors_str += f" et al. ({len(paper['authors'])} total)"
+                print(f"   👤 Authors: {authors_str}")
+
+            # Display other details
+            if paper["year"]:
+                print(f"   📅 Year: {paper['year']}")
+            if paper["venue"] and paper["venue"] != source:
+                print(f"   📍 Venue: {paper['venue']}")
+            if paper["citations"] > 0:
+                print(f"   📈 Citations: {paper['citations']}")
+            if paper["pdf_url"]:
+                print(f"   🔗 PDF: {paper['pdf_url']}")
+
+    print("\n" + "="*60)
+    print("Search completed! ✅")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--parallel":
+        # Run parallel search demo
+        asyncio.run(demo_parallel_search())
+    else:
+        # Run original interactive main function
+        main()
 
 
 
