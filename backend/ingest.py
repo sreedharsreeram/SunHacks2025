@@ -143,6 +143,50 @@ class DocumentProcessor:
             print(f"Error uploading arxiv papers: {e}")
             raise
 
+    def ingest_papers(self, papers_list: List[Dict], collection: str = "arxiv-papers") -> List[Dict]:
+        """Ingest a list of papers into Supermemory"""
+        try:
+            uploaded_papers = []
+            skipped_papers = []
+
+            for paper in papers_list:
+                paper_title = paper["title"]
+
+                # Check if paper already exists
+                if self.check_paper_exists(paper_title, collection):
+                    print(f"Skipped (already exists): {paper_title}")
+                    skipped_papers.append(paper_title)
+                    continue
+
+                metadata = {
+                    "title": paper["title"],
+                    "authors": paper["authors"],
+                    "summary": paper["summary"],
+                    "categories": paper["categories"],
+                    "source": "arxiv",
+                }
+
+                result = self.upload_url(
+                    url=paper["pdf_url"], collection=collection, metadata=metadata
+                )
+
+                uploaded_papers.append(result)
+                print(f"Uploaded: {paper['title']}")
+
+            print(f"\n=== Upload Summary ===")
+            print(f"Successfully uploaded: {len(uploaded_papers)} papers")
+            print(f"Skipped (duplicates): {len(skipped_papers)} papers")
+            if skipped_papers:
+                print(
+                    f"Skipped papers: {', '.join(skipped_papers[:3])}{'...' if len(skipped_papers) > 3 else ''}"
+                )
+
+            return uploaded_papers
+
+        except Exception as e:
+            print(f"Error uploading arxiv papers: {e}")
+            raise
+
 
 # Usage example
 if __name__ == "__main__":

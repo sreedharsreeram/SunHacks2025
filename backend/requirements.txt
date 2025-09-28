@@ -3,4 +3,5 @@ beautifulsoup4==4.12.2
 lxml==4.9.3
 google-search-results==2.4.2
 python-dotenv==1.0.0
+google-generativeai
 arxiv
