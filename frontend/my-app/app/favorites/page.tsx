@@ -8,7 +8,7 @@ import { useSidebarContext } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Search, ArrowLeft, MessageCircle, Clock, Calendar, ExternalLink, Heart } from "lucide-react"
+import { Search, ArrowLeft, MessageCircle, Clock, Calendar, ExternalLink, Heart, HelpCircle } from "lucide-react"
 import { ArxivPaper } from "@/lib/arxiv-scraper"
 
 export default function FavoritesPage() {
@@ -40,20 +40,51 @@ export default function FavoritesPage() {
     }
   }, [user, router])
 
-  const toggleFavorite = (paper: ArxivPaper) => {
-    const updatedFavoriteIds = favorites.includes(paper.id)
+  const toggleFavorite = async (paper: ArxivPaper) => {
+    const wasAlreadyFavorited = favorites.includes(paper.id)
+    const updatedFavoriteIds = wasAlreadyFavorited
       ? favorites.filter((id) => id !== paper.id)
       : [...favorites, paper.id]
 
     setFavorites(updatedFavoriteIds)
     localStorage.setItem("citesight-favorites", JSON.stringify(updatedFavoriteIds))
 
-    const updatedPapers = favorites.includes(paper.id)
+    const updatedPapers = wasAlreadyFavorited
       ? favoritePapers.filter((p) => p.id !== paper.id)
       : [...favoritePapers.filter((p) => p.id !== paper.id), paper]
 
     setFavoritePapers(updatedPapers)
     localStorage.setItem("citesight-favorite-papers", JSON.stringify(updatedPapers))
+
+    // Automatically upload to Supermemory when favorited (not when unfavorited)
+    if (!wasAlreadyFavorited && paper.pdf_url) {
+      try {
+        console.log('Auto-uploading paper to Supermemory:', paper.title)
+        const response = await fetch('/api/supermemory/ingest', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pdfUrl: paper.pdf_url,
+            paperId: paper.id,
+            title: paper.title,
+            authors: paper.authors || []
+          }),
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          console.log('Paper successfully uploaded to Supermemory')
+          localStorage.setItem(`supermemory-ingested-${paper.id}`, 'true')
+        } else {
+          console.warn('Failed to upload paper to Supermemory:', result.error)
+        }
+      } catch (error) {
+        console.error('Error uploading paper to Supermemory:', error)
+      }
+    }
   }
 
   if (!user) {
@@ -192,10 +223,14 @@ export default function FavoritesPage() {
                           size="sm"
                           className="h-8 px-3 text-xs light-shadow dark:dark-glow bg-transparent"
                           onClick={() => {
-                            router.push(`/chat/${paper.id}`)
+                            console.log('Ask button clicked for paper:', paper.id, paper.title)
+                            // Store the paper data for the chat page
+                            localStorage.setItem(`citesight-paper-${paper.id}`, JSON.stringify(paper))
+                            console.log('Paper data stored, navigating to chat page...')
+                            router.push(`/chat/${encodeURIComponent(paper.id)}`)
                           }}
                         >
-                          <MessageCircle className="h-3 w-3 mr-1" />
+                          <HelpCircle className="h-3 w-3 mr-1" />
                           Ask
                         </Button>
                       </div>

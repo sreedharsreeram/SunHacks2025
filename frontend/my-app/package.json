@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.17",
+    "@ai-sdk/openai": "^2.0.38",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "1.2.2",
@@ -41,6 +43,8 @@
     "@types/cheerio": "^1.0.0",
     "@types/xml2js": "^0.4.14",
     "@vercel/analytics": "1.3.1",
+    "ai": "^5.0.56",
+    "ai-react": "^0.0.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",

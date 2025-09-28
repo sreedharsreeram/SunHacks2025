@@ -109,14 +109,15 @@ function SearchContent() {
     }
   }
 
-  const toggleFavorite = (paper: ArxivPaper) => {
+  const toggleFavorite = async (paper: ArxivPaper) => {
     if (!user) {
       console.log('User not authenticated - cannot favorite papers')
       return
     }
 
     console.log('Toggling favorite for paper:', paper.id)
-    const updatedFavoriteIds = favorites.includes(paper.id)
+    const wasAlreadyFavorited = favorites.includes(paper.id)
+    const updatedFavoriteIds = wasAlreadyFavorited
       ? favorites.filter((id) => id !== paper.id)
       : [...favorites, paper.id]
 
@@ -127,12 +128,42 @@ function SearchContent() {
     // Also store the full paper objects
     const existingPapers = JSON.parse(localStorage.getItem("citesight-favorite-papers") || "[]")
     let updatedPapers
-    if (favorites.includes(paper.id)) {
+    if (wasAlreadyFavorited) {
       // Remove from favorites
       updatedPapers = existingPapers.filter((p: ArxivPaper) => p.id !== paper.id)
     } else {
       // Add to favorites
       updatedPapers = [...existingPapers.filter((p: ArxivPaper) => p.id !== paper.id), paper]
+
+      // Automatically upload to Supermemory when favorited
+      if (paper.pdf_url) {
+        try {
+          console.log('Auto-uploading paper to Supermemory:', paper.title)
+          const response = await fetch('/api/supermemory/ingest', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              pdfUrl: paper.pdf_url,
+              paperId: paper.id,
+              title: paper.title,
+              authors: paper.authors || []
+            }),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            console.log('Paper successfully uploaded to Supermemory')
+            localStorage.setItem(`supermemory-ingested-${paper.id}`, 'true')
+          } else {
+            console.warn('Failed to upload paper to Supermemory:', result.error)
+          }
+        } catch (error) {
+          console.error('Error uploading paper to Supermemory:', error)
+        }
+      }
     }
     localStorage.setItem("citesight-favorite-papers", JSON.stringify(updatedPapers))
   }
@@ -273,30 +304,6 @@ function SearchContent() {
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
                         Paper Link
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs light-shadow dark:dark-glow bg-transparent"
-                        onClick={() => {
-                          if (user) {
-                            console.log('Ask button clicked for paper:', paper.id, paper.title)
-                            handlePaperAccess(paper, "chat")
-                            // Store the paper data for the chat page
-                            localStorage.setItem(`citesight-paper-${paper.id}`, JSON.stringify(paper))
-                            console.log('Paper data stored, navigating to chat page...')
-                            router.push(`/chat/${encodeURIComponent(paper.id)}`)
-                          } else {
-                            console.log('User not authenticated - redirecting to sign in')
-                            // Could show a sign-in prompt or redirect to auth
-                            alert('Please sign in to chat with papers')
-                          }
-                        }}
-                        disabled={!user}
-                        title={user ? "Chat with this paper" : "Sign in to chat with papers"}
-                      >
-                        <HelpCircle className="h-3 w-3 mr-1" />
-                        Ask
                       </Button>
                     </div>
                   </div>
