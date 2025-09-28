@@ -217,6 +217,64 @@
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   }
 
+  /* Global minimalist network texture (lines + nodes) applied as the body background so
+     it is visible across all pages (home, search/results, chat, favorites). The pattern
+     has stronger stroke width/opacity to be visible in both light and dark modes. */
+  /* Remove pointer-events from the root body (so UI remains interactive). The network
+     pattern is rendered using a pseudo-element so it can safely be pointer-events:none. */
+  body {
+    background-repeat: none;
+  }
+
+  /* Render the network texture via a non-interactive fixed pseudo-element so it sits
+     behind all page UI but doesn't block pointer events. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    /* Lighter (≈50%) and more connected pattern: reduced stroke opacity and extra connecting lines */
+  /* Small asterisk tile (40x40) - light mode */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='%23000000' fill-opacity='0.065' stroke='none'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' font-family='monospace'>*</text></g></svg>");
+  background-repeat: repeat;
+  background-size: 40px 40px;
+    background-attachment: fixed;
+    background-position: center;
+    pointer-events: none;
+    z-index: 0;
+    /* overall overlay opacity: keep moderate so pattern is visible but subtle */
+    opacity: 0.375; /* reduced to be ~25% lighter than previous 0.5 */
+  }
+
+  .dark body::before {
+    /* Dark mode lighter variant with same connectivity but lighter strokes */
+    /* Small asterisk tile (40x40) - dark mode */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='%23ffffff' fill-opacity='0.065' stroke='none'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' font-family='monospace'>*</text></g></svg>");
+    background-repeat: repeat;
+    background-size: 40px 40px;
+    opacity: 0.375;
+  }
+
+  /* Force card backgrounds and related UI panels to be fully opaque and sit above background */
+  /* Applies to your Card components and any element using the bg-card utility */
+  .bg-card, .rounded-lg.bg-card, .card-opaque {
+    background-color: var(--color-card) !important;
+    background-blend-mode: normal !important;
+    backdrop-filter: none !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  /* Also ensure popovers and inputs that should sit above background are solid */
+  .bg-popover, .bg-card * {
+    z-index: 2;
+  }
+
+  /* Ensure the app content stacks above the background pseudo-element */
+  #__next {
+    position: relative;
+    z-index: 1;
+  }
+
   /* Removed diagonal texture pattern as requested */
   .texture-diagonal::before {
     display: none;

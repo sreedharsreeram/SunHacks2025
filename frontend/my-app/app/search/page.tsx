@@ -160,7 +160,7 @@ function SearchContent() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow"
+                className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow relative z-10"
               />
             </form>
           </div>
