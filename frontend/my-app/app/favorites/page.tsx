@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { Sidebar } from "@/components/sidebar"
+import { useSidebarContext } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Search, Home, ArrowLeft, MessageCircle, Clock, Calendar } from "lucide-react"
+import { Search, ArrowLeft, MessageCircle, Clock, Calendar } from "lucide-react"
 
 // Mock paper data (same as search page)
 const mockPapers = [
@@ -66,6 +67,7 @@ const mockPapers = [
 export default function FavoritesPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const { isHovered } = useSidebarContext()
   const [searchQuery, setSearchQuery] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest")
@@ -109,7 +111,7 @@ export default function FavoritesPage() {
     <div className="flex h-screen bg-background">
       <Sidebar />
 
-      <div className="flex-1 min-h-screen bg-background ml-64">
+      <div className={`flex-1 min-h-screen bg-background transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
         {/* Fixed Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border light-shadow dark:dark-glow">
           <div className="container mx-auto px-4 py-4">
@@ -130,7 +132,7 @@ export default function FavoritesPage() {
                   placeholder="Search for a favorited paper..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow"
+                  className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow relative z-10"
                 />
               </div>
 
@@ -201,26 +203,6 @@ export default function FavoritesPage() {
           )}
         </div>
 
-        {/* Fixed Bottom Navigation */}
-        <div className="fixed bottom-6 left-72 flex flex-col gap-3 z-50">
-          <Button
-            onClick={() => router.push("/")}
-            size="sm"
-            className="h-12 w-12 rounded-full p-0 light-shadow-lg dark:dark-glow-lg hover:light-shadow-lg dark:hover:dark-glow-lg transition-all duration-200"
-            title="Home"
-          >
-            <Home className="h-5 w-5" />
-          </Button>
-          <Button
-            onClick={() => router.push("/search")}
-            variant="outline"
-            size="sm"
-            className="h-12 w-12 rounded-full p-0 light-shadow-lg dark:dark-glow-lg hover:light-shadow-lg dark:hover:dark-glow-lg transition-all duration-200 bg-card"
-            title="Search"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-        </div>
       </div>
     </div>
   )
