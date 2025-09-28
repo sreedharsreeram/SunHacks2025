@@ -1,5 +1,5 @@
 
-# 📖 CiteSight – AI-Powered Academic Paper Discovery
+#  CiteSight – AI-Powered Academic Paper Discovery
 
 Discover, search, and chat with academic papers effortlessly.  
 Built at **SunHacks 2025** for researchers, students, and curious minds by Aniketh Mungara, Sreeram Sreedhar, Tarun Chengappa Chottera, Monish Chengappa Chottera.
@@ -101,12 +101,6 @@ We welcome contributions!
 
 ---
 
-## 📄 License
-
-Licensed under the **MIT License**.  
-See [LICENSE](LICENSE) for details.
-
----
 
 <div align="center">
 
