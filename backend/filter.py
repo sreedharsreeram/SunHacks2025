@@ -21,5 +21,4 @@ def get_bot_response(user_message):
     
 
     return response.text
-    
-print(get_bot_response("RAG question chunking"))
+

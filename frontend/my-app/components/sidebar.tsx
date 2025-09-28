@@ -32,12 +32,17 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        "fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 texture-dots light-shadow dark:dark-glow z-40 flex flex-col",
+        "h-full min-h-screen bg-card border-r border-border transition-all duration-300 ease-in-out texture-dots light-shadow dark:dark-glow z-40 flex flex-col",
         isHovered ? "w-64" : "w-20",
         className,
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        clearTimeout((window as any).sidebarTimeout);
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        (window as any).sidebarTimeout = setTimeout(() => setIsHovered(false), 100);
+      }}
     >
 
 

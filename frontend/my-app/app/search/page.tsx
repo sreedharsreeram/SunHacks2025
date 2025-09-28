@@ -184,13 +184,13 @@ function SearchContent() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="grid h-screen bg-background transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: isHovered ? '256px 1fr' : '80px 1fr' }}>
       <Sidebar />
 
-      <div className={`flex-1 min-h-screen bg-background transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
+      <div className="flex-1 min-h-screen bg-background transition-all duration-300 overflow-y-auto">
         {/* Fixed Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border light-shadow dark:dark-glow">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 py-4 max-w-6xl">
             <div className="flex items-center gap-4 mb-4">
               <Button
                 variant="ghost"
@@ -198,28 +198,34 @@ function SearchContent() {
                 onClick={() => router.push('/')}
                 className="shrink-0"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-2xl font-serif font-bold">Results</h1>
+              <h1 className="text-2xl font-serif font-bold text-center flex-1">Results</h1>
             </div>
 
-            <form onSubmit={handleSearch} className="relative max-w-2xl">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <form onSubmit={handleSearch} className="relative max-w-6xl w-full">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
               <Input
                 type="text"
                 placeholder="Search for a paper..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow relative z-10"
+                className="pl-12 pr-16 h-14 text-lg bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow relative z-10 w-full"
               />
+              <Button
+                type="submit"
+                size="sm"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-10 w-10 p-0 light-shadow dark:dark-glow z-20"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </form>
           </div>
         </div>
 
         {/* Results */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 max-w-6xl overflow-y-auto">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

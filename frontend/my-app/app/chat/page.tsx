@@ -114,11 +114,10 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background relative overflow-hidden">
-      <div className="relative z-10 flex w-full">
-        <Sidebar />
+    <div className="grid h-screen bg-background relative transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: isHovered ? '256px 1fr' : '80px 1fr' }}>
+      <Sidebar />
 
-        <div className={`relative z-10 flex-1 flex h-screen transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
+      <div className="relative z-10 flex-1 flex h-screen transition-all duration-300">
           {/* continuous center divider */}
           <div className="absolute inset-y-0 left-1/2 border-l border-border pointer-events-none z-10" />
 
@@ -140,7 +139,7 @@ export default function ChatPage() {
             />
 
             <div className="flex-1">
-              <ScrollArea className="h-full p-6">
+              <ScrollArea className="h-[calc(100vh-200px)] p-6">
                 <div className="space-y-6">
                   <Card className="p-4 light-shadow dark:dark-glow">
                     <div className="flex items-center gap-3 mb-3">
@@ -205,7 +204,7 @@ export default function ChatPage() {
             <ChatHeader title="CiteSight AI" secondary="General Research Assistant" />
 
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="h-[calc(100vh-200px)] p-4">
               <div className="space-y-4">
                 {messages.map((message) => (
                   <div
@@ -265,22 +264,22 @@ export default function ChatPage() {
 
             {/* Input */}
             <div className="p-4 border-t border-border">
-              <form onSubmit={handleSendMessage} className="flex gap-2">
+              <form onSubmit={handleSendMessage} className="flex gap-3">
                 <Input
                   type="text"
                   placeholder="Ask me about research papers..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   disabled={isLoading}
-                  className="flex-1 light-shadow dark:dark-glow relative z-10"
+                  className="flex-1 h-12 text-lg bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow relative z-10"
                 />
                 <Button
                   type="submit"
                   disabled={isLoading || !inputMessage.trim()}
                   size="sm"
-                  className="light-shadow dark:dark-glow relative z-10"
+                  className="h-12 w-12 light-shadow dark:dark-glow relative z-10"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5" />
                 </Button>
               </form>
             </div>

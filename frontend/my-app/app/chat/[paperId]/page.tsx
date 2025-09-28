@@ -429,12 +429,10 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="grid h-screen bg-background transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: isHovered ? '256px 1fr' : '80px 1fr' }}>
       <Sidebar />
 
-      <div
-        className={`flex-1 flex h-screen transition-all duration-300 ${isHovered ? "ml-64" : "ml-20"}`}
-      >
+      <div className="flex-1 flex h-screen transition-all duration-300">
         {/* Paper Content Panel */}
         <div className="w-1/2 border-r border-border flex flex-col">
           {/* Header */}
@@ -446,10 +444,9 @@ export default function ChatPage() {
                 onClick={() => router.back()}
                 className="shrink-0"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-xl font-serif font-bold">Paper Content</h1>
+              <h1 className="text-xl font-serif font-bold text-center flex-1">Paper Content</h1>
             </div>
             <h2 className="text-lg font-serif font-semibold leading-tight">
               {paper.title}
@@ -460,7 +457,7 @@ export default function ChatPage() {
           </div>
 
           {/* Paper Content */}
-          <ScrollArea className="flex-1 p-6">
+          <ScrollArea className="h-[calc(100vh-200px)] p-6">
             <div className="prose prose-sm max-w-none">
               {paper.pdf_url && (
                 <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
@@ -582,12 +579,12 @@ export default function ChatPage() {
         <div className="w-1/2 flex flex-col">
           {/* Chat Header */}
           <div className="p-4 border-b border-border bg-card light-shadow dark:dark-glow">
-            <h1 className="text-xl font-serif font-bold mb-1">Chatbot</h1>
+            <h1 className="text-xl font-serif font-bold mb-1 text-center">Chatbot</h1>
             <p className="text-sm text-muted-foreground">{paper.title}</p>
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="h-[calc(100vh-200px)] p-4">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
@@ -659,22 +656,22 @@ export default function ChatPage() {
 
           {/* Input */}
           <div className="p-4 border-t border-border">
-            <form onSubmit={handleSendMessage} className="flex gap-2">
+            <form onSubmit={handleSendMessage} className="flex gap-3">
               <Input
                 type="text"
                 placeholder="Ask anything about this paper..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 disabled={isLoading}
-                className="flex-1 light-shadow dark:dark-glow"
+                className="flex-1 h-12 text-lg bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow"
               />
               <Button
                 type="submit"
                 disabled={isLoading || !inputMessage.trim()}
                 size="sm"
-                className="light-shadow dark:dark-glow"
+                className="h-12 w-12 light-shadow dark:dark-glow"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               </Button>
             </form>
           </div>
