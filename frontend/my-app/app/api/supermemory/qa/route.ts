@@ -130,16 +130,16 @@ ${context}
 
 INSTRUCTIONS:
 1. Answer the question using ONLY the information from the provided documents
-2. Include specific citations in your response using [Document X] format
+2. Include specific citations in your response using [Source X] format
 3. If the documents don't contain enough information, say so clearly
 4. Be accurate and quote directly when possible
 5. If multiple documents support a point, cite all relevant ones
 6. Maintain a helpful, professional tone
 
 CITATION FORMAT:
-- Use [Document 1], [Document 2], etc. to cite sources
+- Use [Source 1], [Source 2], etc. to cite sources
 - Place citations after the relevant information
-- Example: "The process involves three steps [Document 1]. However, some experts recommend a four-step approach [Document 3]."
+- Example: "The process involves three steps [Source 1]. However, some experts recommend a four-step approach [Source 3]."
 
 If the question cannot be answered from the provided documents, respond with: "I don't have enough information in the provided documents to answer this question accurately."`,
       temperature: 0.1,

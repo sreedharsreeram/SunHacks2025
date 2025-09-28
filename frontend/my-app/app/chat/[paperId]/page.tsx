@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import CitationMessage from "@/components/citation-message";
+import { enhanceHtmlWithCitationAnchors } from "@/lib/citation-handler";
 import {
   Send,
   ArrowLeft,
@@ -20,6 +22,8 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
+  FileText,
+  Globe,
 } from "lucide-react";
 // import { useChat } from "ai/rsc";
 
@@ -41,6 +45,14 @@ The dominant sequence transduction models are based on complex recurrent or conv
 1 Introduction
 
 Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequence modeling and transduction problems such as language modeling and machine translation [35, 2, 5]. Numerous efforts have since continued to push the boundaries of recurrent language models and encoder-decoder architectures [38, 24, 15].
+
+2 Background
+
+The attention mechanism has become an integral part of compelling sequence modeling and transduction models [2]. The key innovation of the attention mechanism is that it allows modeling of dependencies without regard to their distance in the input or output sequences.
+
+3 Model Architecture
+
+The Transformer follows this overall architecture using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder, shown in the left and right halves of Figure 1, respectively.
 
 Recurrent models typically factor computation along the symbol positions of the input and output sequences. Aligning the positions to steps in computation time, they generate a sequence of hidden states ht, as a function of the previous hidden state ht−1 and the input for position t. This inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples. Recent work has achieved significant improvements in computational efficiency through factorization tricks [21] and conditional computation [32], while also improving model performance in the latter case. The fundamental constraint of sequential computation, however, remains.
 
@@ -140,6 +152,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  sources?: any[];
 }
 
 export default function ChatPage() {
@@ -155,12 +168,81 @@ export default function ChatPage() {
     "idle" | "ingesting" | "success" | "error"
   >("idle");
   const [ingestionError, setIngestionError] = useState<string>("");
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
+  const [hasHtmlVersion, setHasHtmlVersion] = useState<boolean>(false);
+  const [isLoadingHtml, setIsLoadingHtml] = useState<boolean>(false);
+  const [htmlError, setHtmlError] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const paperContentRef = useRef<HTMLDivElement>(null);
 
   const paperId = params?.paperId
     ? decodeURIComponent(params.paperId as string)
     : "";
   const [paper, setPaper] = useState<any>(null);
+
+  // Function to fetch HTML version of the paper
+  const fetchHtmlContent = async () => {
+    if (!paperId || isLoadingHtml) return;
+
+    setIsLoadingHtml(true);
+    setHtmlError("");
+
+    try {
+      const response = await fetch("/api/arxiv-proxy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          paperId: paperId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.hasHtml) {
+        setHasHtmlVersion(true);
+        setHtmlContent(result.htmlContent);
+        console.log("✅ HTML version loaded successfully");
+      } else {
+        setHasHtmlVersion(false);
+        setHtmlContent(null);
+        console.log("ℹ️ No HTML version available for this paper");
+      }
+    } catch (error) {
+      console.error("HTML fetch error:", error);
+      setHtmlError(
+        error instanceof Error ? error.message : "Failed to fetch HTML version",
+      );
+      setHasHtmlVersion(false);
+      setHtmlContent(null);
+    } finally {
+      setIsLoadingHtml(false);
+    }
+  };
+
+  // Function to check supermemory ingestion status
+  const checkIngestionStatus = async () => {
+    if (!paperId) return;
+
+    try {
+      const response = await fetch(`/api/supermemory/status?paperId=${encodeURIComponent(paperId)}`);
+      const result = await response.json();
+      
+      if (result.totalDocuments > 0) {
+        setIngestionStatus("success");
+        localStorage.setItem(`supermemory-ingested-${paperId}`, "true");
+      } else {
+        // Only set to idle if not already processed or processing
+        if (ingestionStatus === "idle" || ingestionStatus === "error") {
+          setIngestionStatus("idle");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to check ingestion status:", error);
+      // Don't change status on error, keep current state
+    }
+  };
 
   // Function to ingest PDF into Supermemory
   const ingestPaperPDF = async () => {
@@ -239,6 +321,14 @@ export default function ChatPage() {
           );
           if (wasIngested) {
             setIngestionStatus("success");
+          } else {
+            // Check actual supermemory status
+            checkIngestionStatus();
+          }
+
+          // Automatically try to fetch HTML content for arXiv papers
+          if (parsedPaper.pdf_url && parsedPaper.pdf_url.includes('arxiv.org')) {
+            fetchHtmlContent();
           }
         } catch (error) {
           console.error("[v0] Error parsing stored paper data:", error);
@@ -253,6 +343,23 @@ export default function ChatPage() {
         const mockPaper = mockPapers.find((p) => p.id === paperId);
         console.log("[v0] Mock paper found:", mockPaper?.title);
         setPaper(mockPaper);
+        
+        // Check ingestion status for mock papers too
+        if (mockPaper) {
+          const wasIngested = localStorage.getItem(
+            `supermemory-ingested-${paperId}`,
+          );
+          if (wasIngested) {
+            setIngestionStatus("success");
+          } else {
+            checkIngestionStatus();
+          }
+        }
+        
+        // Try to fetch HTML content for mock papers too (mock papers don't have pdf_url)
+        // if (mockPaper?.pdf_url && mockPaper.pdf_url.includes('arxiv.org')) {
+        //   fetchHtmlContent();
+        // }
       }
     }
   }, [paperId]);
@@ -389,8 +496,9 @@ export default function ChatPage() {
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: result.answer + (result.sources?.length > 0 ? `\n\n**Sources:** ${result.sources.length} relevant passages found` : ''),
+            content: result.answer + (result.sources?.length > 0 ? `\n\n**Sources:** ${result.sources.length} ${result.sources.length === 1 ? 'relevant passage' : 'relevant passages'} found` : ''),
             timestamp: new Date(),
+            sources: result.sources || [],
           };
 
           setMessages((prev) => [...prev, assistantMessage]);
@@ -465,7 +573,7 @@ export default function ChatPage() {
               {paper.pdf_url && (
                 <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
                   <p className="text-sm font-medium mb-2">Paper Access:</p>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-4 items-center justify-between">
                     <Button
                       variant="outline"
                       size="sm"
@@ -476,104 +584,71 @@ export default function ChatPage() {
                       View Original PDF
                     </Button>
 
-                    {ingestionStatus === "idle" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={ingestPaperPDF}
-                        disabled={isIngesting}
-                        className="light-shadow dark:dark-glow"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Enable Smart Chat
-                      </Button>
-                    )}
-
-                    {ingestionStatus === "ingesting" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled
-                        className="light-shadow dark:dark-glow"
-                      >
-                        <Upload className="h-4 w-4 mr-2 animate-pulse" />
-                        Processing...
-                      </Button>
-                    )}
-
-                    {ingestionStatus === "success" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled
-                        className="light-shadow dark:dark-glow text-green-600"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Smart Chat Ready
-                      </Button>
-                    )}
-
-                    {/* Debug button to check document status */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch(
-                            `/api/supermemory/status?paperId=${encodeURIComponent(paperId)}`,
-                          );
-                          const result = await response.json();
-                          console.log("📋 Document status check:", result);
-                          alert(
-                            `Documents in collection: ${result.totalDocuments}\n\nCheck console for details`,
-                          );
-                        } catch (error) {
-                          console.error("Status check failed:", error);
-                          alert("Status check failed - see console");
-                        }
-                      }}
-                      className="light-shadow dark:dark-glow text-blue-600"
-                    >
-                      🔍 Debug Status
-                    </Button>
-
-                    {ingestionStatus === "error" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={ingestPaperPDF}
-                        className="light-shadow dark:dark-glow text-red-600"
-                      >
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        Retry Processing
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Paper Ingestion Status:</span>
+                      {ingestionStatus === "idle" && (
+                        <button
+                          onClick={ingestPaperPDF}
+                          disabled={isIngesting}
+                          className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors cursor-pointer underline"
+                        >
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          Not Ingested (Click to ingest)
+                        </button>
+                      )}
+                      {ingestionStatus === "ingesting" && (
+                        <span className="flex items-center gap-1 text-blue-600">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          Processing...
+                        </span>
+                      )}
+                      {ingestionStatus === "success" && (
+                        <button
+                          onClick={checkIngestionStatus}
+                          className="flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors cursor-pointer"
+                          title="Click to refresh status"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Ingested
+                        </button>
+                      )}
+                      {ingestionStatus === "error" && (
+                        <button
+                          onClick={ingestPaperPDF}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors cursor-pointer underline"
+                        >
+                          <AlertCircle className="h-4 w-4" />
+                          Failed (Click to retry)
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {ingestionStatus === "error" && ingestionError && (
                     <p className="text-xs text-red-600 mt-2">
-                      {ingestionError}
-                    </p>
-                  )}
-
-                  {ingestionStatus === "success" && (
-                    <p className="text-xs text-green-600 mt-2">
-                      ✓ Document processed - Ask detailed questions about the
-                      paper content!
+                      Error: {ingestionError}
                     </p>
                   )}
                 </div>
               )}
-              <div className="mb-6">
-                <img
-                  src={paper.thumbnail || "/placeholder.svg"}
-                  alt={paper.title}
-                  className="w-full max-w-md mx-auto rounded border light-shadow dark:dark-glow"
-                />
-              </div>
-              <div className="whitespace-pre-line leading-relaxed">
-                {paper.content}
-              </div>
+              {hasHtmlVersion && htmlContent ? (
+                <div className="arxiv-html-content">
+                  <div 
+                    ref={paperContentRef}
+                    className="arxiv-paper-content prose prose-sm max-w-none dark:prose-invert"
+                    dangerouslySetInnerHTML={{ __html: enhanceHtmlWithCitationAnchors(htmlContent, paperId) }}
+                    style={{
+                      fontSize: '14px',
+                      lineHeight: '1.6',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                </div>
+              ) : (
+                <div ref={paperContentRef} className="whitespace-pre-line leading-relaxed">
+                  {paper.content}
+                </div>
+              )}
             </div>
           </ScrollArea>
         </div>
@@ -610,26 +685,35 @@ export default function ChatPage() {
                         <Bot className="h-4 w-4" />
                       )}
                     </div>
-                    <Card
-                      className={`p-3 light-shadow dark:dark-glow ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card border border-border"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                      <p
-                        className={`text-xs mt-2 ${
+                      <Card
+                        className={`p-3 light-shadow dark:dark-glow ${
                           message.role === "user"
-                            ? "text-primary-foreground/70"
-                            : "text-muted-foreground"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-card border border-border"
                         }`}
                       >
-                        {message.timestamp.toLocaleTimeString()}
-                      </p>
-                    </Card>
+                        {message.role === "assistant" && message.sources ? (
+                          <CitationMessage
+                            content={message.content}
+                            sources={message.sources}
+                            paperContentRef={paperContentRef}
+                            className="text-sm"
+                          />
+                        ) : (
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                            {message.content}
+                          </p>
+                        )}
+                        <p
+                          className={`text-xs mt-2 ${
+                            message.role === "user"
+                              ? "text-primary-foreground/70"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                      </Card>
                   </div>
                 </div>
               ))}
