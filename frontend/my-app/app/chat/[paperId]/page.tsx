@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, ArrowLeft, Bot, User } from "lucide-react"
+import { Send, ArrowLeft, Bot, User, ExternalLink } from "lucide-react"
 
 // Mock paper data with full content for all papers
 const mockPapers = [
@@ -141,8 +141,42 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const paperId = params?.paperId as string
-  const paper = paperId ? mockPapers.find((p) => p.id === paperId) : null
+  const paperId = params?.paperId ? decodeURIComponent(params.paperId as string) : ""
+  const [paper, setPaper] = useState<any>(null)
+
+  // Load paper data from localStorage or fall back to mock data
+  useEffect(() => {
+    console.log('[v0] Loading paper data for paperId:', paperId)
+    if (paperId) {
+      const storageKey = `citesight-paper-${paperId}`
+      console.log('[v0] Looking for paper data with key:', storageKey)
+      const storedPaper = localStorage.getItem(storageKey)
+      if (storedPaper) {
+        console.log('[v0] Found stored paper data:', storedPaper.substring(0, 100) + '...')
+        try {
+          const parsedPaper = JSON.parse(storedPaper)
+          // Add content field if it doesn't exist (for ArXiv papers)
+          if (!parsedPaper.content) {
+            parsedPaper.content = `${parsedPaper.title}\n\nAuthors: ${parsedPaper.authors.join(', ')}\n\nAbstract:\n${parsedPaper.summary}\n\nThis is an ArXiv paper. For the full content, please refer to the original PDF at the provided link.`
+          }
+          console.log('[v0] Paper data loaded successfully:', parsedPaper.title)
+          setPaper(parsedPaper)
+        } catch (error) {
+          console.error('[v0] Error parsing stored paper data:', error)
+          // Fall back to mock data
+          const mockPaper = mockPapers.find((p) => p.id === paperId)
+          console.log('[v0] Falling back to mock paper:', mockPaper?.title)
+          setPaper(mockPaper)
+        }
+      } else {
+        console.log('[v0] No stored paper data found, trying mock data')
+        // Fall back to mock data
+        const mockPaper = mockPapers.find((p) => p.id === paperId)
+        console.log('[v0] Mock paper found:', mockPaper?.title)
+        setPaper(mockPaper)
+      }
+    }
+  }, [paperId])
 
   console.log("[v0] ChatPage - paperId:", paperId, "paper found:", !!paper)
 
@@ -152,9 +186,14 @@ export default function ChatPage() {
       return
     }
 
-    if (!paperId || !paper) {
-      console.log("[v0] ChatPage - Invalid paper ID or paper not found")
+    if (!paperId) {
+      console.log("[v0] ChatPage - No paper ID provided")
       router.push("/search")
+      return
+    }
+
+    if (!paper) {
+      console.log("[v0] ChatPage - Paper data not loaded yet")
       return
     }
 
@@ -184,7 +223,7 @@ export default function ChatPage() {
       }
       setMessages([welcomeMessage])
     }
-  }, [user, router, paperId]) // Proper dependencies
+  }, [user, router, paperId, paper]) // Include paper in dependencies
 
   useEffect(() => {
     if (messages.length > 0 && paperId) {
@@ -276,6 +315,20 @@ export default function ChatPage() {
           {/* Paper Content */}
           <ScrollArea className="flex-1 p-6">
             <div className="prose prose-sm max-w-none">
+              {paper.pdf_url && (
+                <div className="mb-4 p-4 bg-muted rounded-lg">
+                  <p className="text-sm font-medium mb-2">Full Paper Access:</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(paper.pdf_url, "_blank")}
+                    className="light-shadow dark:dark-glow"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Original PDF
+                  </Button>
+                </div>
+              )}
               <div className="mb-6">
                 <img
                   src={paper.thumbnail || "/placeholder.svg"}

@@ -62,11 +62,11 @@ function SearchContent() {
 
   useEffect(() => {
     const query = searchParams.get("q")
-    if (query && query !== searchQuery) {
+    if (query) {
       setSearchQuery(query)
       performSearch(query)
     }
-  }, [searchParams]) // Remove searchQuery from dependencies to prevent loop
+  }, [searchParams])
 
   useEffect(() => {
     const savedFavorites = localStorage.getItem("citesight-favorites")
@@ -87,12 +87,19 @@ function SearchContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
+    const query = searchQuery.trim()
+    if (query) {
       const history = JSON.parse(localStorage.getItem("citesight-search-history") || "[]")
-      const updatedHistory = [searchQuery, ...history.filter((item: string) => item !== searchQuery)].slice(0, 10)
+      const updatedHistory = [query, ...history.filter((item: string) => item !== query)].slice(0, 10)
       localStorage.setItem("citesight-search-history", JSON.stringify(updatedHistory))
 
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+      const currentQuery = searchParams.get("q")
+      if (currentQuery !== query) {
+        router.push(`/search?q=${encodeURIComponent(query)}`)
+      } else {
+        // If same query, just perform search directly
+        performSearch(query)
+      }
     }
   }
 
@@ -157,14 +164,7 @@ function SearchContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  // Try router.back() first, fallback to home if no history
-                  if (window.history.length > 1) {
-                    router.back();
-                  } else {
-                    router.push('/');
-                  }
-                }}
+                onClick={() => router.push('/')}
                 className="shrink-0"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -280,8 +280,12 @@ function SearchContent() {
                         className="h-8 px-3 text-xs light-shadow dark:dark-glow bg-transparent"
                         onClick={() => {
                           if (user) {
+                            console.log('Ask button clicked for paper:', paper.id, paper.title)
                             handlePaperAccess(paper, "chat")
-                            router.push(`/chat/${paper.id}`)
+                            // Store the paper data for the chat page
+                            localStorage.setItem(`citesight-paper-${paper.id}`, JSON.stringify(paper))
+                            console.log('Paper data stored, navigating to chat page...')
+                            router.push(`/chat/${encodeURIComponent(paper.id)}`)
                           } else {
                             console.log('User not authenticated - redirecting to sign in')
                             // Could show a sign-in prompt or redirect to auth

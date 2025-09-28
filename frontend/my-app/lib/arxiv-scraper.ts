@@ -1,5 +1,5 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+import axios from "axios";
+import * as cheerio from "cheerio";
 
 export interface ArxivPaper {
   id: string;
@@ -26,7 +26,10 @@ export interface ArxivSearchResult {
  * @param maxResults The maximum number of results to return.
  * @returns A promise that resolves to an ArxivSearchResult object.
  */
-export async function scrapePapers(query: string, maxResults: number = 10): Promise<ArxivSearchResult> {
+export async function scrapePapers(
+  query: string,
+  maxResults: number = 20,
+): Promise<ArxivSearchResult> {
   try {
     console.log(`🔍 Scraping ArXiv for: '${query}'`);
 
@@ -36,9 +39,10 @@ export async function scrapePapers(query: string, maxResults: number = 10): Prom
 
     const response = await axios.get(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
-      timeout: 10000
+      timeout: 10000,
     });
 
     console.log(`📊 Response status: ${response.status}`);
@@ -47,27 +51,46 @@ export async function scrapePapers(query: string, maxResults: number = 10): Prom
     const papers: ArxivPaper[] = [];
 
     // Find each paper result
-    $('li.arxiv-result').each((index, element) => {
+    $("li.arxiv-result").each((index, element) => {
       try {
         const $paper = $(element);
 
         // Extract paper ID from the first link
-        const idLink = $paper.find('p.list-title a').first().attr('href');
-        const id = idLink ? idLink.split('/').pop()?.replace('v1', '').replace('v2', '').replace('v3', '') || '' : '';
+        const idLink = $paper.find("p.list-title a").first().attr("href");
+        const id = idLink
+          ? idLink
+              .split("/")
+              .pop()
+              ?.replace("v1", "")
+              .replace("v2", "")
+              .replace("v3", "") || ""
+          : "";
 
         // Extract title
-        const title = $paper.find('p.title').text().replace('Title:', '').trim();
+        const title = $paper
+          .find("p.title")
+          .text()
+          .replace("Title:", "")
+          .trim();
 
         // Extract authors
-        const authorsText = $paper.find('p.authors').text().replace('Authors:', '').trim();
-        const authors = authorsText.split(',').map(author => author.trim()).filter(author => author.length > 0);
+        const authorsText = $paper
+          .find("p.authors")
+          .text()
+          .replace("Authors:", "")
+          .trim();
+        const authors = authorsText
+          .split(",")
+          .map((author) => author.trim())
+          .filter((author) => author.length > 0);
 
         // Extract abstract/summary
-        const summary = $paper.find('span.abstract-full').text().trim() ||
-                       $paper.find('p.abstract').text().replace('Abstract:', '').trim();
+        const summary =
+          $paper.find("span.abstract-full").text().trim() ||
+          $paper.find("p.abstract").text().replace("Abstract:", "").trim();
 
         // Extract date
-        const dateText = $paper.find('p.is-size-7').text();
+        const dateText = $paper.find("p.is-size-7").text();
         const dateMatch = dateText.match(/Submitted (\d{1,2} \w+ \d{4})/);
         const publishedDate = dateMatch ? new Date(dateMatch[1]) : new Date();
 
@@ -77,16 +100,15 @@ export async function scrapePapers(query: string, maxResults: number = 10): Prom
         if (id && title && authors.length > 0) {
           papers.push({
             id,
-            title: title.replace(/\s+/g, ' '),
-            summary: summary.replace(/\s+/g, ' '),
+            title: title.replace(/\s+/g, " "),
+            summary: summary.replace(/\s+/g, " "),
             authors,
-            published_date: publishedDate.toISOString().split('T')[0],
+            published_date: publishedDate.toISOString().split("T")[0],
             pdf_url: pdfUrl,
-            venue: 'arXiv',
-            year: publishedDate.getFullYear()
+            venue: "arXiv",
+            year: publishedDate.getFullYear(),
           });
         }
-
       } catch (error) {
         console.error(`Error parsing paper ${index}:`, error);
       }
@@ -98,9 +120,8 @@ export async function scrapePapers(query: string, maxResults: number = 10): Prom
       success: true,
       data: papers,
       count: papers.length,
-      query: query
+      query: query,
     };
-
   } catch (error) {
     console.error("❌ Error scraping ArXiv:", error);
     return {
@@ -108,7 +129,7 @@ export async function scrapePapers(query: string, maxResults: number = 10): Prom
       data: [],
       count: 0,
       query: query,
-      error: error instanceof Error ? error.message : 'Unknown scraping error'
+      error: error instanceof Error ? error.message : "Unknown scraping error",
     };
   }
 }
@@ -118,7 +139,10 @@ export async function scrapePapers(query: string, maxResults: number = 10): Prom
  * @param query The search term
  * @param maxResults Maximum number of results
  */
-export async function scrapeArxivAPI(query: string, maxResults: number = 10): Promise<ArxivSearchResult> {
+export async function scrapeArxivAPI(
+  query: string,
+  maxResults: number = 10,
+): Promise<ArxivSearchResult> {
   try {
     console.log(`🔍 Using ArXiv API fallback for: '${query}'`);
 
@@ -129,61 +153,67 @@ export async function scrapeArxivAPI(query: string, maxResults: number = 10): Pr
     const apiUrl = `${baseUrl}${searchQuery}${results}${sortBy}`;
 
     const response = await axios.get(apiUrl, {
-      timeout: 10000
+      timeout: 10000,
     });
 
     // Parse XML using cheerio
     const $ = cheerio.load(response.data, { xmlMode: true });
     const papers: ArxivPaper[] = [];
 
-    $('entry').slice(0, maxResults).each((index, element) => {
-      const $entry = $(element);
+    $("entry")
+      .slice(0, maxResults)
+      .each((index, element) => {
+        const $entry = $(element);
 
-      const id = $entry.find('id').text().split('/').pop()?.replace(/v\d+$/, '') || '';
-      const title = $entry.find('title').text().trim().replace(/\s+/g, ' ');
-      const summary = $entry.find('summary').text().trim().replace(/\s+/g, ' ');
-      const publishedDate = new Date($entry.find('published').text());
+        const id =
+          $entry.find("id").text().split("/").pop()?.replace(/v\d+$/, "") || "";
+        const title = $entry.find("title").text().trim().replace(/\s+/g, " ");
+        const summary = $entry
+          .find("summary")
+          .text()
+          .trim()
+          .replace(/\s+/g, " ");
+        const publishedDate = new Date($entry.find("published").text());
 
-      // Extract authors
-      const authors: string[] = [];
-      $entry.find('author name').each((i, authorEl) => {
-        authors.push($(authorEl).text().trim());
-      });
+        // Extract authors
+        const authors: string[] = [];
+        $entry.find("author name").each((i, authorEl) => {
+          authors.push($(authorEl).text().trim());
+        });
 
-      // Generate PDF URL
-      let pdfUrl = '';
-      $entry.find('link').each((i, linkEl) => {
-        const $link = $(linkEl);
-        if ($link.attr('title') === 'pdf') {
-          pdfUrl = $link.attr('href') || '';
+        // Generate PDF URL
+        let pdfUrl = "";
+        $entry.find("link").each((i, linkEl) => {
+          const $link = $(linkEl);
+          if ($link.attr("title") === "pdf") {
+            pdfUrl = $link.attr("href") || "";
+          }
+        });
+
+        if (!pdfUrl && id) {
+          pdfUrl = `https://arxiv.org/pdf/${id}.pdf`;
+        }
+
+        if (id && title && authors.length > 0) {
+          papers.push({
+            id,
+            title,
+            summary,
+            authors,
+            published_date: publishedDate.toISOString().split("T")[0],
+            pdf_url: pdfUrl,
+            venue: "arXiv",
+            year: publishedDate.getFullYear(),
+          });
         }
       });
-
-      if (!pdfUrl && id) {
-        pdfUrl = `https://arxiv.org/pdf/${id}.pdf`;
-      }
-
-      if (id && title && authors.length > 0) {
-        papers.push({
-          id,
-          title,
-          summary,
-          authors,
-          published_date: publishedDate.toISOString().split('T')[0],
-          pdf_url: pdfUrl,
-          venue: 'arXiv',
-          year: publishedDate.getFullYear()
-        });
-      }
-    });
 
     return {
       success: true,
       data: papers,
       count: papers.length,
-      query: query
+      query: query,
     };
-
   } catch (error) {
     console.error("❌ Error with ArXiv API fallback:", error);
     return {
@@ -191,7 +221,7 @@ export async function scrapeArxivAPI(query: string, maxResults: number = 10): Pr
       data: [],
       count: 0,
       query: query,
-      error: error instanceof Error ? error.message : 'API fallback error'
+      error: error instanceof Error ? error.message : "API fallback error",
     };
   }
 }
@@ -199,7 +229,10 @@ export async function scrapeArxivAPI(query: string, maxResults: number = 10): Pr
 /**
  * Scraper with fallback - tries main scraping first, then API
  */
-export async function scrapeWithFallback(query: string, maxResults: number = 10): Promise<ArxivSearchResult> {
+export async function scrapeWithFallback(
+  query: string,
+  maxResults: number = 10,
+): Promise<ArxivSearchResult> {
   // Try main web scraping first
   const mainResult = await scrapePapers(query, maxResults);
 
@@ -208,6 +241,6 @@ export async function scrapeWithFallback(query: string, maxResults: number = 10)
   }
 
   // Fallback to ArXiv API if web scraping fails
-  console.log('📡 Web scraping failed, trying ArXiv API fallback...');
+  console.log("📡 Web scraping failed, trying ArXiv API fallback...");
   return await scrapeArxivAPI(query, maxResults);
 }
