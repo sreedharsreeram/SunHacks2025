@@ -4,6 +4,7 @@ import { IBM_Plex_Mono, Roboto_Slab } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/components/auth-provider"
 import { ThemeProvider } from "@/components/theme-provider"
+import { SidebarProvider } from "@/components/sidebar-context"
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body className={`${ibmPlexMono.variable} ${robotoSlab.variable} font-mono antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-            <Suspense fallback={null}>{children}</Suspense>
+            <SidebarProvider>
+              <Suspense fallback={null}>{children}</Suspense>
+            </SidebarProvider>
           </AuthProvider>
         </ThemeProvider>
         <Analytics />
