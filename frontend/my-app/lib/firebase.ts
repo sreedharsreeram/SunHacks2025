@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 
 // Hardcoded configuration to bypass environment variable issues
 const firebaseConfig = {
-  apiKey: "AIzaSyCa2T78OkPktF4g9nOS_HZxMCWKWcNqIa0",
+  apiKey: "xyz",
   authDomain: "cite-21139.firebaseapp.com",
   projectId: "cite-21139",
   storageBucket: "cite-21139.firebasestorage.app",
