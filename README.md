@@ -72,12 +72,14 @@ Built at **SunHacks 2025** for researchers, students, and curious minds by Anike
 ##  Screenshots
 
 ###  Home Page
-![Home Page](homepage.jpg)
-*Minimalist landing page with sleek search bar and modern design.*
+
+![homepage](https://github.com/user-attachments/assets/1644bc71-0431-439d-9973-9b5ec477a078)
 
 ###  Chat Interface
-![Chat Interface](Chatbot.jpg)
-*Engage directly with academic papers through AI-powered conversations.*
+![Chatbot](https://github.com/user-attachments/assets/2b894c6e-5041-49f2-93c6-ab0a18d83933)
+
+### Favourites
+![WhatsApp Image 2025-09-28 at 10 30 53_12d3304b](https://github.com/user-attachments/assets/b781e654-a464-4c0f-beba-471724548dda)
 
 ---
 
