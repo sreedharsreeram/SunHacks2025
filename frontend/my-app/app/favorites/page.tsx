@@ -101,7 +101,7 @@ export default function FavoritesPage() {
                   placeholder="Search for a favorited paper..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow"
+                  className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow relative z-10"
                 />
               </div>
 
