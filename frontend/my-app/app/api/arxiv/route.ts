@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scrapeWithFallback } from '@/lib/arxiv-scraper';
+import { searchWithFullAIEnhancement } from '@/lib/arxiv-scraper';
 
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const query = searchParams.get('q');
-        const maxResults = parseInt(searchParams.get('max_results') || '10');
+        const maxResults = parseInt(searchParams.get('max_results') || '200');
 
         if (!query) {
             return NextResponse.json({
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
             }, { status: 400 });
         }
 
-        const result = await scrapeWithFallback(query, maxResults);
+        const result = await searchWithFullAIEnhancement(query, maxResults);
 
         return NextResponse.json(result);
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { query, maxResults = 10 } = body;
+        const { query, maxResults = 200 } = body;
 
         if (!query) {
             return NextResponse.json({
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        const result = await scrapeWithFallback(query, maxResults);
+        const result = await searchWithFullAIEnhancement(query, maxResults);
 
         return NextResponse.json(result);
 
