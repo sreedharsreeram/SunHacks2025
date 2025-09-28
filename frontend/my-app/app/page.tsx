@@ -1,40 +1,48 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/auth-provider"
-import { Sidebar } from "@/components/sidebar"
-import { useSidebarContext } from "@/components/sidebar-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, ArrowRight } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth-provider";
+import { Sidebar } from "@/components/sidebar";
+import { useSidebarContext } from "@/components/sidebar-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const { user, signIn } = useAuth()
-  const { isHovered } = useSidebarContext()
-  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user, signIn } = useAuth();
+  const { isHovered } = useSidebarContext();
+  const router = useRouter();
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (searchQuery.trim()) {
       // Add to search history
-      const history = JSON.parse(localStorage.getItem("citesight-search-history") || "[]")
-      const updatedHistory = [searchQuery, ...history.filter((item: string) => item !== searchQuery)].slice(0, 10)
-      localStorage.setItem("citesight-search-history", JSON.stringify(updatedHistory))
+      const history = JSON.parse(
+        localStorage.getItem("citesight-search-history") || "[]",
+      );
+      const updatedHistory = [
+        searchQuery,
+        ...history.filter((item: string) => item !== searchQuery),
+      ].slice(0, 10);
+      localStorage.setItem(
+        "citesight-search-history",
+        JSON.stringify(updatedHistory),
+      );
 
       // Navigate to search results
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSearch(e as any)
+      handleSearch(e as any);
     }
-  }
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -42,12 +50,18 @@ export default function HomePage() {
       <Sidebar />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col items-center justify-center p-8 relative transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
+      <div
+        className={`flex-1 flex flex-col items-center justify-center p-8 relative transition-all duration-300 ${isHovered ? "ml-64" : "ml-20"}`}
+      >
         <div className="w-full max-w-2xl space-y-8">
           {/* Logo/Title */}
           <div className="text-center space-y-4">
-            <h1 className="text-6xl font-serif font-bold text-foreground tracking-tight">CiteSight</h1>
-            <p className="text-lg text-muted-foreground">Discover and research academic papers with ease</p>
+            <h1 className="text-6xl font-serif font-bold text-foreground tracking-tight">
+              CiteSight
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Discover and read academic papers with ease
+            </p>
           </div>
 
           {/* Search Section */}
@@ -73,12 +87,12 @@ export default function HomePage() {
               </div>
             </form>
 
-
             {/* Sign In Prompt - Only show if user is not logged in */}
             {!user && (
               <div className="text-center space-y-4 p-6 bg-card rounded-lg border border-border light-shadow dark:dark-glow">
                 <p className="text-muted-foreground">
-                  Sign in with Google to save your favorite papers and access personalized features
+                  Sign in with Google to save your favorite papers and access
+                  personalized features
                 </p>
                 <Button
                   onClick={signIn}
@@ -93,5 +107,5 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
