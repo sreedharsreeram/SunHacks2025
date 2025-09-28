@@ -50,8 +50,8 @@ export default function HomePage() {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center p-8 relative transition-all duration-300 overflow-y-auto">
-        <div className="w-full max-w-2xl space-y-8 flex flex-col items-center">
+      <div className="flex flex-col items-center justify-center px-4 py-8 relative transition-all duration-300 overflow-y-auto">
+        <div className="w-full max-w-6xl space-y-8 flex flex-col items-center px-8">
           {/* Logo/Title */}
           <div className="text-center space-y-4">
             <h1 className="text-6xl font-serif font-bold text-foreground tracking-tight">
@@ -63,8 +63,8 @@ export default function HomePage() {
           </div>
 
           {/* Search Section */}
-          <div className="space-y-6">
-            <form onSubmit={handleSearch} className="relative w-full max-w-2xl">
+          <div className="space-y-6 w-full">
+            <form onSubmit={handleSearch} className="relative w-full">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground z-10" />
                 <Input
@@ -73,14 +73,14 @@ export default function HomePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="pl-14 pr-16 h-18 text-xl bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow w-full"
+                  className="pl-14 pr-16 h-20 text-xl bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow w-full"
                 />
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-12 w-12 p-0 light-shadow dark:dark-glow z-20"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-16 w-16 p-0 light-shadow dark:dark-glow z-20"
                 >
-                  <Search className="h-5 w-5" />
+                  <Search className="h-6 w-6" />
                 </Button>
               </div>
             </form>
