@@ -38,8 +38,8 @@ Built at **SunHacks 2025** for researchers, students, and curious minds by Anike
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/yourusername/sunhacks2025.git
-   cd sunhacks2025
+   git clone https://github.com/sreedharsreeram/SunHacks2025.git
+   cd SunHacks2025
    ```
 
 2. **Install dependencies**
