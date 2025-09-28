@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const query = searchParams.get('q');
-        const maxResults = parseInt(searchParams.get('max_results') || '10');
+        const maxResults = parseInt(searchParams.get('max_results') || '200');
         const forceArxiv = searchParams.get('force_arxiv') === 'true';
 
         if (!query) {

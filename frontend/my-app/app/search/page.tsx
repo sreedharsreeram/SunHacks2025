@@ -37,7 +37,7 @@ function SearchContent() {
     setSearchStatus('Searching for contextually relevant papers...')
 
     try {
-      const response = await fetch(`/api/arxiv?q=${encodeURIComponent(query)}&max_results=10`)
+      const response = await fetch(`/api/arxiv?q=${encodeURIComponent(query)}&max_results=200`)
       const data = await response.json()
 
       if (data.success) {
