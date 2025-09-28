@@ -40,20 +40,51 @@ export default function FavoritesPage() {
     }
   }, [user, router])
 
-  const toggleFavorite = (paper: ArxivPaper) => {
-    const updatedFavoriteIds = favorites.includes(paper.id)
+  const toggleFavorite = async (paper: ArxivPaper) => {
+    const wasAlreadyFavorited = favorites.includes(paper.id)
+    const updatedFavoriteIds = wasAlreadyFavorited
       ? favorites.filter((id) => id !== paper.id)
       : [...favorites, paper.id]
 
     setFavorites(updatedFavoriteIds)
     localStorage.setItem("citesight-favorites", JSON.stringify(updatedFavoriteIds))
 
-    const updatedPapers = favorites.includes(paper.id)
+    const updatedPapers = wasAlreadyFavorited
       ? favoritePapers.filter((p) => p.id !== paper.id)
       : [...favoritePapers.filter((p) => p.id !== paper.id), paper]
 
     setFavoritePapers(updatedPapers)
     localStorage.setItem("citesight-favorite-papers", JSON.stringify(updatedPapers))
+
+    // Automatically upload to Supermemory when favorited (not when unfavorited)
+    if (!wasAlreadyFavorited && paper.pdf_url) {
+      try {
+        console.log('Auto-uploading paper to Supermemory:', paper.title)
+        const response = await fetch('/api/supermemory/ingest', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pdfUrl: paper.pdf_url,
+            paperId: paper.id,
+            title: paper.title,
+            authors: paper.authors || []
+          }),
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          console.log('Paper successfully uploaded to Supermemory')
+          localStorage.setItem(`supermemory-ingested-${paper.id}`, 'true')
+        } else {
+          console.warn('Failed to upload paper to Supermemory:', result.error)
+        }
+      } catch (error) {
+        console.error('Error uploading paper to Supermemory:', error)
+      }
+    }
   }
 
   if (!user) {

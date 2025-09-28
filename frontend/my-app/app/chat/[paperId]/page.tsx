@@ -11,7 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, ArrowLeft, Bot, User, ExternalLink } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  Bot,
+  User,
+  ExternalLink,
+  Upload,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+// import { useChat } from "ai/rsc";
 
 // Mock paper data with full content for all papers
 const mockPapers = [
@@ -140,12 +150,64 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isIngesting, setIsIngesting] = useState(false);
+  const [ingestionStatus, setIngestionStatus] = useState<
+    "idle" | "ingesting" | "success" | "error"
+  >("idle");
+  const [ingestionError, setIngestionError] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const paperId = params?.paperId
     ? decodeURIComponent(params.paperId as string)
     : "";
   const [paper, setPaper] = useState<any>(null);
+
+  // Function to ingest PDF into Supermemory
+  const ingestPaperPDF = async () => {
+    if (
+      !paper?.pdf_url ||
+      ingestionStatus === "ingesting" ||
+      ingestionStatus === "success"
+    )
+      return;
+
+    setIsIngesting(true);
+    setIngestionStatus("ingesting");
+    setIngestionError("");
+
+    try {
+      const response = await fetch("/api/supermemory/ingest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pdfUrl: paper.pdf_url,
+          paperId: paperId,
+          title: paper.title,
+          authors: paper.authors || [],
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIngestionStatus("success");
+        // Store ingestion success in localStorage to avoid re-ingesting
+        localStorage.setItem(`supermemory-ingested-${paperId}`, "true");
+      } else {
+        throw new Error(result.error || "Ingestion failed");
+      }
+    } catch (error) {
+      console.error("PDF ingestion error:", error);
+      setIngestionStatus("error");
+      setIngestionError(
+        error instanceof Error ? error.message : "Failed to ingest PDF",
+      );
+    } finally {
+      setIsIngesting(false);
+    }
+  };
 
   // Load paper data from localStorage or fall back to mock data
   useEffect(() => {
@@ -170,6 +232,14 @@ export default function ChatPage() {
             parsedPaper.title,
           );
           setPaper(parsedPaper);
+
+          // Check if PDF was already ingested
+          const wasIngested = localStorage.getItem(
+            `supermemory-ingested-${paperId}`,
+          );
+          if (wasIngested) {
+            setIngestionStatus("success");
+          }
         } catch (error) {
           console.error("[v0] Error parsing stored paper data:", error);
           // Fall back to mock data
@@ -262,6 +332,7 @@ export default function ChatPage() {
     );
   }
 
+  // Handle streaming responses from the API
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
@@ -277,51 +348,112 @@ export default function ChatPage() {
     setInputMessage("");
     setIsLoading(true);
 
-    // Simulate AI response (in production, this would call an actual AI API)
-    setTimeout(
-      () => {
-        const responses = [
-          "That's an excellent question about the paper. Based on the content, I can explain that the authors focus on...",
-          "This concept is central to the paper's methodology. The key insight here is...",
-          "The paper addresses this through their novel approach of...",
-          "According to the research findings presented in the paper...",
-          "The authors demonstrate this through their experimental results, showing that...",
-        ];
+    try {
+      console.log("💬 Chat Debug:", {
+        ingestionStatus,
+        paperId,
+        question: inputMessage,
+        wasIngested: localStorage.getItem(`supermemory-ingested-${paperId}`),
+      });
+
+      // Use streaming Q&A if paper is ingested, otherwise show fallback
+      if (ingestionStatus === "success") {
+        console.log("✅ Using Supermemory streaming for response");
+
+        const conversationHistory = messages.slice(-6).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+        // Create streaming response
+        const response = await fetch("/api/supermemory/qa", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: inputMessage,
+            collection: paperId,
+            conversationHistory,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Handle non-streaming response
+        const result = await response.json();
+
+        if (result.answer) {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: result.answer + (result.sources?.length > 0 ? `\n\n**Sources:** ${result.sources.length} relevant passages found` : ''),
+            timestamp: new Date(),
+          };
+
+          setMessages((prev) => [...prev, assistantMessage]);
+        } else {
+          throw new Error('No answer received from Supermemory');
+        }
+      } else {
+        console.log("⚠️ Document not ingested - showing fallback response");
+        const fallbackResponse =
+          "I'd love to help you understand this paper better! For more detailed insights, please wait for the document to be fully processed by clicking 'Enable Smart Chat', or I can provide general guidance based on the paper's abstract and title.\n\n**Debug**: Ingestion status is '" +
+          ingestionStatus +
+          "'. Try clicking 'Enable Smart Chat' first, or use the Debug Status button to check if documents were uploaded.";
 
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content:
-            responses[Math.floor(Math.random() * responses.length)] +
-            " " +
-            inputMessage,
+          content: fallbackResponse,
           timestamp: new Date(),
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
-        setIsLoading(false);
-      },
-      1000 + Math.random() * 2000,
-    );
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I apologize, but I encountered an error processing your question. Please try again or rephrase your question.",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
 
-      <div className={`flex-1 flex h-screen transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
+      <div
+        className={`flex-1 flex h-screen transition-all duration-300 ${isHovered ? "ml-64" : "ml-20"}`}
+      >
         {/* Paper Content Panel */}
         <div className="w-1/2 border-r border-border flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-border bg-card light-shadow dark:dark-glow">
             <div className="flex items-center gap-4 mb-2">
-              <Button variant="ghost" size="sm" onClick={() => router.back()} className="shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className="shrink-0"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
               <h1 className="text-xl font-serif font-bold">Paper Content</h1>
             </div>
-            <h2 className="text-lg font-serif font-semibold leading-tight">{paper.title}</h2>
+            <h2 className="text-lg font-serif font-semibold leading-tight">
+              {paper.title}
+            </h2>
             <p className="text-sm text-muted-foreground mt-1">
               {paper.authors.join(", ")} • {paper.year} • {paper.venue}
             </p>
@@ -331,17 +463,105 @@ export default function ChatPage() {
           <ScrollArea className="flex-1 p-6">
             <div className="prose prose-sm max-w-none">
               {paper.pdf_url && (
-                <div className="mb-4 p-4 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-2">Full Paper Access:</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(paper.pdf_url, "_blank")}
-                    className="light-shadow dark:dark-glow"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Original PDF
-                  </Button>
+                <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
+                  <p className="text-sm font-medium mb-2">Paper Access:</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(paper.pdf_url, "_blank")}
+                      className="light-shadow dark:dark-glow"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Original PDF
+                    </Button>
+
+                    {ingestionStatus === "idle" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={ingestPaperPDF}
+                        disabled={isIngesting}
+                        className="light-shadow dark:dark-glow"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Enable Smart Chat
+                      </Button>
+                    )}
+
+                    {ingestionStatus === "ingesting" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        className="light-shadow dark:dark-glow"
+                      >
+                        <Upload className="h-4 w-4 mr-2 animate-pulse" />
+                        Processing...
+                      </Button>
+                    )}
+
+                    {ingestionStatus === "success" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        className="light-shadow dark:dark-glow text-green-600"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Smart Chat Ready
+                      </Button>
+                    )}
+
+                    {/* Debug button to check document status */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(
+                            `/api/supermemory/status?paperId=${encodeURIComponent(paperId)}`,
+                          );
+                          const result = await response.json();
+                          console.log("📋 Document status check:", result);
+                          alert(
+                            `Documents in collection: ${result.totalDocuments}\n\nCheck console for details`,
+                          );
+                        } catch (error) {
+                          console.error("Status check failed:", error);
+                          alert("Status check failed - see console");
+                        }
+                      }}
+                      className="light-shadow dark:dark-glow text-blue-600"
+                    >
+                      🔍 Debug Status
+                    </Button>
+
+                    {ingestionStatus === "error" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={ingestPaperPDF}
+                        className="light-shadow dark:dark-glow text-red-600"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Retry Processing
+                      </Button>
+                    )}
+                  </div>
+
+                  {ingestionStatus === "error" && ingestionError && (
+                    <p className="text-xs text-red-600 mt-2">
+                      {ingestionError}
+                    </p>
+                  )}
+
+                  {ingestionStatus === "success" && (
+                    <p className="text-xs text-green-600 mt-2">
+                      ✓ Document processed - Ask detailed questions about the
+                      paper content!
+                    </p>
+                  )}
                 </div>
               )}
               <div className="mb-6">
@@ -351,7 +571,9 @@ export default function ChatPage() {
                   className="w-full max-w-md mx-auto rounded border light-shadow dark:dark-glow"
                 />
               </div>
-              <div className="whitespace-pre-line leading-relaxed">{paper.content}</div>
+              <div className="whitespace-pre-line leading-relaxed">
+                {paper.content}
+              </div>
             </div>
           </ScrollArea>
         </div>
@@ -377,20 +599,32 @@ export default function ChatPage() {
                   >
                     <div
                       className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                        message.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary"
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary"
                       }`}
                     >
-                      {message.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                      {message.role === "user" ? (
+                        <User className="h-4 w-4" />
+                      ) : (
+                        <Bot className="h-4 w-4" />
+                      )}
                     </div>
                     <Card
                       className={`p-3 light-shadow dark:dark-glow ${
-                        message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card border border-border"
                       }`}
                     >
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {message.content}
+                      </p>
                       <p
                         className={`text-xs mt-2 ${
-                          message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                          message.role === "user"
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {message.timestamp.toLocaleTimeString()}
