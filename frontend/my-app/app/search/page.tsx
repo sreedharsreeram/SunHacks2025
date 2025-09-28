@@ -6,10 +6,11 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { Sidebar } from "@/components/sidebar"
+import { useSidebarContext } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Search, Heart, Home, ArrowLeft, ExternalLink, HelpCircle } from "lucide-react"
+import { Search, Heart, ArrowLeft, ExternalLink, HelpCircle } from "lucide-react"
 
 // Mock paper data
 const mockPapers = [
@@ -69,6 +70,7 @@ function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user } = useAuth()
+  const { isHovered } = useSidebarContext()
   const [searchQuery, setSearchQuery] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
 
@@ -138,7 +140,7 @@ function SearchContent() {
     <div className="flex h-screen bg-background">
       <Sidebar />
 
-      <div className="flex-1 min-h-screen bg-background ml-64">
+      <div className={`flex-1 min-h-screen bg-background transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
         {/* Fixed Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border light-shadow dark:dark-glow">
           <div className="container mx-auto px-4 py-4">
@@ -247,31 +249,6 @@ function SearchContent() {
           <div className="text-center mt-8 text-sm text-muted-foreground">Showing top 10 results only</div>
         </div>
 
-        <div className="fixed bottom-6 left-72 flex flex-col gap-3 z-50">
-          <Button
-            onClick={() => router.push("/")}
-            size="sm"
-            className="h-12 w-12 rounded-full p-0 light-shadow-lg dark:dark-glow-lg hover:light-shadow-lg dark:hover:dark-glow-lg transition-all duration-200"
-            title="Home"
-          >
-            <Home className="h-5 w-5" />
-          </Button>
-          {user && (
-            <Button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                router.push("/favorites")
-              }}
-              variant="outline"
-              size="sm"
-              className="h-12 w-12 rounded-full p-0 light-shadow-lg dark:dark-glow-lg hover:light-shadow-lg dark:hover:dark-glow-lg transition-all duration-200 bg-card"
-              title="Favorites"
-            >
-              <Heart className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   )

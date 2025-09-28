@@ -6,11 +6,12 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { Sidebar } from "@/components/sidebar"
+import { useSidebarContext } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Home, Heart, ArrowLeft, Bot, User } from "lucide-react"
+import { Send, ArrowLeft, Bot, User } from "lucide-react"
 
 // Mock paper data with full content for all papers
 const mockPapers = [
@@ -134,6 +135,7 @@ export default function ChatPage() {
   const router = useRouter()
   const params = useParams()
   const { user } = useAuth()
+  const { isHovered } = useSidebarContext()
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -253,7 +255,7 @@ export default function ChatPage() {
     <div className="flex h-screen bg-background">
       <Sidebar />
 
-      <div className="flex-1 flex h-screen ml-64">
+      <div className={`flex-1 flex h-screen transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
         {/* Paper Content Panel */}
         <div className="w-1/2 border-r border-border flex flex-col">
           {/* Header */}
@@ -377,25 +379,6 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-6 left-72 flex flex-col gap-3 z-50">
-        <Button
-          onClick={() => router.push("/")}
-          size="sm"
-          className="h-12 w-12 rounded-full p-0 light-shadow-lg dark:dark-glow-lg hover:light-shadow-lg dark:hover:dark-glow-lg transition-all duration-200"
-          title="Home"
-        >
-          <Home className="h-5 w-5" />
-        </Button>
-        <Button
-          onClick={() => router.push("/favorites")}
-          variant="outline"
-          size="sm"
-          className="h-12 w-12 rounded-full p-0 light-shadow-lg dark:dark-glow-lg hover:light-shadow-lg dark:hover:dark-glow-lg transition-all duration-200 bg-card"
-          title="Favorites"
-        >
-          <Heart className="h-5 w-5" />
-        </Button>
-      </div>
     </div>
   )
 }

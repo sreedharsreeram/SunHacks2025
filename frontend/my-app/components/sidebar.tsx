@@ -4,109 +4,136 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
 import { useTheme } from "@/components/theme-provider"
-import { ChevronLeft, ChevronRight, Sun, Moon, User, LogOut } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useSidebarContext } from "@/components/sidebar-context"
+import { ChevronLeft, ChevronRight, Sun, Moon, User, LogOut, Home, Search, Heart, Plus } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
 
 interface SidebarProps {
   className?: string
 }
 
 export function Sidebar({ className }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [recentPapers, setRecentPapers] = useState<any[]>([])
+  const { isHovered, setIsHovered } = useSidebarContext()
   const { user, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const router = useRouter()
+  const pathname = usePathname()
 
-  useEffect(() => {
-    const papers = localStorage.getItem("citesight-recent-papers")
-    if (papers) {
-      setRecentPapers(JSON.parse(papers))
-    }
-  }, [])
+  const navigationItems = [
+    { id: "home", label: "Home", icon: Home, path: "/" },
+    { id: "search", label: "Search", icon: Search, path: "/search" },
+    { id: "favorites", label: "Favorites", icon: Heart, path: "/favorites" },
+  ]
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+  }
 
   return (
     <div
       className={cn(
-        "fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 texture-dots light-shadow dark:dark-glow z-40",
-        isCollapsed ? "w-16" : "w-64",
+        "fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 texture-dots light-shadow dark:dark-glow z-40 flex flex-col",
+        isHovered ? "w-64" : "w-20",
         className,
       )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Toggle Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute -right-3 top-6 z-10 h-6 w-6 rounded-full border bg-card light-shadow dark:dark-glow"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-      </Button>
 
+
+      {/* Theme Button - Top Right */}
+      <div className="p-4 pb-2">
+        <div className={cn("flex", isHovered ? "justify-start" : "justify-center")}>
+          <button
+            onClick={toggleTheme}
+            className={cn(
+              "rounded-full flex items-center justify-center transition-all duration-200 light-shadow dark:dark-glow",
+              "h-8 w-8",
+              theme === "dark" ? "bg-blue-500 hover:bg-blue-600" : "bg-orange-500 hover:bg-orange-600"
+            )}
+          >
+            {theme === "dark" ? (
+              <Moon className="h-4 w-4 text-white" />
+            ) : (
+              <Sun className="h-4 w-4 text-white" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation Section */}
+      <div className="flex-1 px-4 py-2">
+        <div className="space-y-3">
+          {navigationItems
+            .filter(item => item.path !== pathname)
+            .map((item) => {
+              const Icon = item.icon
+              return (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start h-12 rounded-lg light-shadow dark:dark-glow hover:bg-secondary/50 transition-all duration-200",
+                    !isHovered && "justify-center px-2"
+                  )}
+                  onClick={() => handleNavigation(item.path)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Icon className="h-5 w-5" />
+                    {isHovered && <span className="text-sm font-medium">{item.label}</span>}
+                  </div>
+                </Button>
+              )
+            })}
+        </div>
+      </div>
+
+      {/* Bottom Section - User Settings */}
       <div className="p-4 space-y-4">
+
         {/* User Section */}
         {user && (
-          <div
-            className={cn(
-              "flex items-center space-x-3 p-3 rounded-lg bg-secondary/50 light-shadow dark:dark-glow",
-              isCollapsed && "justify-center",
-            )}
-          >
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-4 w-4" />
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size={isCollapsed ? "sm" : "default"}
-          className={cn("w-full justify-start light-shadow dark:dark-glow", isCollapsed && "justify-center px-2")}
-          onClick={toggleTheme}
-        >
-          {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          {!isCollapsed && <span className="ml-2">{theme === "light" ? "Dark Mode" : "Light Mode"}</span>}
-        </Button>
-
-        {!isCollapsed && recentPapers.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-sm font-serif font-medium text-muted-foreground">Recent Papers</h3>
-            <div className="space-y-1 max-h-40 overflow-y-auto">
-              {recentPapers.slice(0, 5).map((paper, index) => (
-                <div
-                  key={index}
-                  className="text-xs p-2 rounded bg-secondary/30 text-muted-foreground hover:bg-secondary/50 cursor-pointer transition-colors light-shadow dark:dark-glow"
-                >
-                  <div className="font-medium truncate">{paper.title}</div>
-                  <div className="text-[10px] opacity-70 mt-1">
-                    {paper.action === "view" ? "Viewed" : "Asked about"} • {paper.authors?.[0]}
-                  </div>
+          <div className="space-y-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-full justify-start h-12 rounded-lg light-shadow dark:dark-glow hover:bg-secondary/50 transition-all duration-200",
+                !isHovered && "justify-center px-2"
+              )}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">
+                    {user.name?.charAt(0).toUpperCase() || "U"}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                {isHovered && (
+                  <div className="text-left">
+                    <div className="text-sm font-medium">{user.name}</div>
+                    <div className="text-xs text-muted-foreground">Account</div>
+                  </div>
+                )}
+              </div>
+            </Button>
 
-        {/* Sign Out */}
-        {user && (
-          <Button
-            variant="ghost"
-            size={isCollapsed ? "sm" : "default"}
-            className={cn(
-              "w-full justify-start text-destructive hover:text-destructive light-shadow dark:dark-glow",
-              isCollapsed && "justify-center px-2",
-            )}
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">Sign Out</span>}
-          </Button>
+            {/* Sign Out */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-full justify-start h-12 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 light-shadow dark:dark-glow transition-all duration-200",
+                !isHovered && "justify-center px-2"
+              )}
+              onClick={signOut}
+            >
+              <div className="flex items-center space-x-3">
+                <LogOut className="h-5 w-5" />
+                {isHovered && <span className="text-sm font-medium">Sign Out</span>}
+              </div>
+            </Button>
+          </div>
         )}
       </div>
     </div>

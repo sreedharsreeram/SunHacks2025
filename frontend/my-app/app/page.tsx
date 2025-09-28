@@ -6,13 +6,15 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { Sidebar } from "@/components/sidebar"
+import { useSidebarContext } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, ArrowRight, Heart } from "lucide-react"
+import { Search, ArrowRight } from "lucide-react"
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const { user, signIn } = useAuth()
+  const { isHovered } = useSidebarContext()
   const router = useRouter()
 
   const handleSearch = (e: React.FormEvent) => {
@@ -40,7 +42,7 @@ export default function HomePage() {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 relative ml-64">
+      <div className={`flex-1 flex flex-col items-center justify-center p-8 relative transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
         <div className="w-full max-w-2xl space-y-8">
           {/* Logo/Title */}
           <div className="text-center space-y-4">
@@ -59,7 +61,7 @@ export default function HomePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="pl-12 pr-12 h-14 text-lg bg-card border-2 border-border focus:border-primary transition-all duration-300 light-shadow dark:dark-glow search-glow"
+                  className="pl-12 pr-12 h-14 text-lg bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow"
                 />
                 <Button
                   type="submit"
@@ -71,24 +73,6 @@ export default function HomePage() {
               </div>
             </form>
 
-            {/* Favorites Button - Only show if user is logged in */}
-            {user && (
-              <div className="flex justify-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-12 px-8 text-base font-medium border-2 hover:bg-secondary/50 transition-all duration-300 light-shadow dark:dark-glow bg-card favorites-glow"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    router.push("/favorites")
-                  }}
-                >
-                  <Heart className="h-5 w-5 mr-2" />
-                  Favorites
-                </Button>
-              </div>
-            )}
 
             {/* Sign In Prompt - Only show if user is not logged in */}
             {!user && (
