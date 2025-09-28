@@ -102,20 +102,32 @@ function SearchContent() {
     }
   }
 
-  const toggleFavorite = (paperId: string) => {
+  const toggleFavorite = (paper: ArxivPaper) => {
     if (!user) {
       console.log('User not authenticated - cannot favorite papers')
       return
     }
 
-    console.log('Toggling favorite for paper:', paperId)
-    const updatedFavorites = favorites.includes(paperId)
-      ? favorites.filter((id) => id !== paperId)
-      : [...favorites, paperId]
+    console.log('Toggling favorite for paper:', paper.id)
+    const updatedFavoriteIds = favorites.includes(paper.id)
+      ? favorites.filter((id) => id !== paper.id)
+      : [...favorites, paper.id]
 
-    console.log('Updated favorites:', updatedFavorites)
-    setFavorites(updatedFavorites)
-    localStorage.setItem("citesight-favorites", JSON.stringify(updatedFavorites))
+    console.log('Updated favorite IDs:', updatedFavoriteIds)
+    setFavorites(updatedFavoriteIds)
+    localStorage.setItem("citesight-favorites", JSON.stringify(updatedFavoriteIds))
+
+    // Also store the full paper objects
+    const existingPapers = JSON.parse(localStorage.getItem("citesight-favorite-papers") || "[]")
+    let updatedPapers
+    if (favorites.includes(paper.id)) {
+      // Remove from favorites
+      updatedPapers = existingPapers.filter((p: ArxivPaper) => p.id !== paper.id)
+    } else {
+      // Add to favorites
+      updatedPapers = [...existingPapers.filter((p: ArxivPaper) => p.id !== paper.id), paper]
+    }
+    localStorage.setItem("citesight-favorite-papers", JSON.stringify(updatedPapers))
   }
 
   const handlePaperAccess = (paper: any, action: "view" | "chat") => {
@@ -216,7 +228,7 @@ function SearchContent() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            toggleFavorite(paper.id)
+                            toggleFavorite(paper)
                           }}
                           className="shrink-0 ml-2 hover:bg-pink-50 dark:hover:bg-pink-950"
                           title={favorites.includes(paper.id) ? "Remove from favorites" : "Add to favorites"}
