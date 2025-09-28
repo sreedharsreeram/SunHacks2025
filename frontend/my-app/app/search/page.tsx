@@ -274,30 +274,6 @@ function SearchContent() {
                         <ExternalLink className="h-3 w-3 mr-1" />
                         Paper Link
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs light-shadow dark:dark-glow bg-transparent"
-                        onClick={() => {
-                          if (user) {
-                            console.log('Ask button clicked for paper:', paper.id, paper.title)
-                            handlePaperAccess(paper, "chat")
-                            // Store the paper data for the chat page
-                            localStorage.setItem(`citesight-paper-${paper.id}`, JSON.stringify(paper))
-                            console.log('Paper data stored, navigating to chat page...')
-                            router.push(`/chat/${encodeURIComponent(paper.id)}`)
-                          } else {
-                            console.log('User not authenticated - redirecting to sign in')
-                            // Could show a sign-in prompt or redirect to auth
-                            alert('Please sign in to chat with papers')
-                          }
-                        }}
-                        disabled={!user}
-                        title={user ? "Chat with this paper" : "Sign in to chat with papers"}
-                      >
-                        <HelpCircle className="h-3 w-3 mr-1" />
-                        Ask
-                      </Button>
                     </div>
                   </div>
                 </div>

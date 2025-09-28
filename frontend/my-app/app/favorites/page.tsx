@@ -8,7 +8,7 @@ import { useSidebarContext } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Search, ArrowLeft, MessageCircle, Clock, Calendar, ExternalLink, Heart } from "lucide-react"
+import { Search, ArrowLeft, MessageCircle, Clock, Calendar, ExternalLink, Heart, HelpCircle } from "lucide-react"
 import { ArxivPaper } from "@/lib/arxiv-scraper"
 
 export default function FavoritesPage() {
@@ -192,10 +192,14 @@ export default function FavoritesPage() {
                           size="sm"
                           className="h-8 px-3 text-xs light-shadow dark:dark-glow bg-transparent"
                           onClick={() => {
-                            router.push(`/chat/${paper.id}`)
+                            console.log('Ask button clicked for paper:', paper.id, paper.title)
+                            // Store the paper data for the chat page
+                            localStorage.setItem(`citesight-paper-${paper.id}`, JSON.stringify(paper))
+                            console.log('Paper data stored, navigating to chat page...')
+                            router.push(`/chat/${encodeURIComponent(paper.id)}`)
                           }}
                         >
-                          <MessageCircle className="h-3 w-3 mr-1" />
+                          <HelpCircle className="h-3 w-3 mr-1" />
                           Ask
                         </Button>
                       </div>
