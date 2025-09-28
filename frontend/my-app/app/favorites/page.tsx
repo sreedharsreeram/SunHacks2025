@@ -108,31 +108,30 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="grid h-screen bg-background transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: isHovered ? '256px 1fr' : '80px 1fr' }}>
       <Sidebar />
 
-      <div className={`flex-1 min-h-screen bg-background transition-all duration-300 ${isHovered ? 'ml-64' : 'ml-20'}`}>
+      <div className="flex-1 min-h-screen bg-background transition-all duration-300 overflow-y-auto">
         {/* Fixed Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border light-shadow dark:dark-glow">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 py-4 max-w-6xl">
             <div className="flex items-center gap-4 mb-4">
               <Button variant="ghost" size="sm" onClick={() => router.back()} className="shrink-0">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-3xl font-serif font-bold">Favorites</h1>
+              <h1 className="text-3xl font-serif font-bold text-center flex-1">Favorites</h1>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search Bar */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="relative flex-1 max-w-4xl">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
                 <Input
                   type="text"
                   placeholder="Search for a favorited paper..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-10 bg-card light-shadow dark:dark-glow relative z-10"
+                  className="pl-12 pr-4 h-14 text-lg bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow relative z-10 w-full"
                 />
               </div>
 
@@ -159,7 +158,7 @@ export default function FavoritesPage() {
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 max-w-6xl overflow-y-auto">
           {sortedPapers.length === 0 ? (
             <div className="text-center py-12">
               <div className="space-y-4">

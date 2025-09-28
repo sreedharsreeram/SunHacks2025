@@ -45,15 +45,13 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="grid h-screen bg-background transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: isHovered ? '256px 1fr' : '80px 1fr' }}>
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div
-        className={`flex-1 flex flex-col items-center justify-center p-8 relative transition-all duration-300 ${isHovered ? "ml-64" : "ml-20"}`}
-      >
-        <div className="w-full max-w-2xl space-y-8">
+      <div className="flex flex-col items-center justify-center p-8 relative transition-all duration-300 overflow-y-auto">
+        <div className="w-full max-w-2xl space-y-8 flex flex-col items-center">
           {/* Logo/Title */}
           <div className="text-center space-y-4">
             <h1 className="text-6xl font-serif font-bold text-foreground tracking-tight">
@@ -66,23 +64,23 @@ export default function HomePage() {
 
           {/* Search Section */}
           <div className="space-y-6">
-            <form onSubmit={handleSearch} className="relative">
+            <form onSubmit={handleSearch} className="relative w-full max-w-2xl">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground z-10" />
                 <Input
                   type="text"
                   placeholder="Search for a paper..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="pl-12 pr-12 h-14 text-lg bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow"
+                  className="pl-14 pr-16 h-18 text-xl bg-card border-2 border-border focus:border-primary focus:outline-none transition-all duration-300 light-shadow dark:dark-glow w-full"
                 />
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-10 w-10 p-0 light-shadow dark:dark-glow"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-12 w-12 p-0 light-shadow dark:dark-glow z-20"
                 >
-                  <ArrowRight className="h-4 w-4" />
+                  <Search className="h-5 w-5" />
                 </Button>
               </div>
             </form>
