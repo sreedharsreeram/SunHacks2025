@@ -1,0 +1,242 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* CiteSight academic minimal theme colors */
+:root {
+  /* Light mode - archival cream and paper-inspired with slight yellow tint */
+  --background: #f9f9f7;
+  --foreground: #1e1e1c;
+  --card: #fefef9;
+  --card-foreground: #1e1e1c;
+  --popover: #fefef9;
+  --popover-foreground: #1e1e1c;
+  --primary: #1e1e1c;
+  --primary-foreground: #fefef9;
+  --secondary: #f1f1ef;
+  --secondary-foreground: #1e1e1c;
+  --muted: #f1f1ef;
+  --muted-foreground: #6b6b6b;
+  --accent: #e8e8e6;
+  --accent-foreground: #1e1e1c;
+  --destructive: #dc2626;
+  --destructive-foreground: #fefef9;
+  --border: #e0e0e0;
+  --input: #e0e0e0;
+  --ring: #1e1e1c;
+  --radius: 0.5rem;
+  --sidebar: #fefef9;
+  --sidebar-foreground: #1e1e1c;
+  --sidebar-primary: #1e1e1c;
+  --sidebar-primary-foreground: #fefef9;
+  --sidebar-accent: #f1f1ef;
+  --sidebar-accent-foreground: #1e1e1c;
+  --sidebar-border: #e0e0e0;
+  --sidebar-ring: #1e1e1c;
+}
+
+.dark {
+  /* Dark mode - charcoal focus */
+  --background: #2b2b2b;
+  --foreground: #e6e6e6;
+  --card: #333333;
+  --card-foreground: #e6e6e6;
+  --popover: #333333;
+  --popover-foreground: #e6e6e6;
+  --primary: #e6e6e6;
+  --primary-foreground: #2b2b2b;
+  --secondary: #3a3a3a;
+  --secondary-foreground: #e6e6e6;
+  --muted: #3a3a3a;
+  --muted-foreground: #a0a0a0;
+  --accent: #4a4a4a;
+  --accent-foreground: #e6e6e6;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #444444;
+  --input: #444444;
+  --ring: #e6e6e6;
+  --sidebar: #333333;
+  --sidebar-foreground: #e6e6e6;
+  --sidebar-primary: #e6e6e6;
+  --sidebar-primary-foreground: #2b2b2b;
+  --sidebar-accent: #3a3a3a;
+  --sidebar-accent-foreground: #e6e6e6;
+  --sidebar-border: #444444;
+  --sidebar-ring: #e6e6e6;
+}
+
+@theme inline {
+  --font-mono: ui-monospace, "Courier New", monospace;
+  --font-serif: "Roboto Slab", "IBM Plex Serif", Georgia, serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-mono;
+    font-size: 15.5px;
+    line-height: 1.58;
+    /* Cross matrix pattern with smaller dots for depth effect */
+    /* Primary matrix - horizontal and vertical lines */
+    background-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.08) 0.5px, transparent 0.5px),
+      radial-gradient(circle at center, rgba(0, 0, 0, 0.06) 0.3px, transparent 0.3px),
+      /* Secondary diagonal cross matrix for depth */
+      radial-gradient(circle at center, rgba(0, 0, 0, 0.04) 0.4px, transparent 0.4px),
+      radial-gradient(circle at center, rgba(0, 0, 0, 0.03) 0.2px, transparent 0.2px);
+    background-size: 20px 20px, 15px 15px, 25px 25px, 12px 12px;
+    background-position: 0 0, 7px 7px, 12px 12px, 3px 3px;
+  }
+
+  .dark body {
+    /* Dark mode cross matrix with white dots */
+    /* Primary matrix - horizontal and vertical lines */
+    background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.06) 0.5px, transparent 0.5px),
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.04) 0.3px, transparent 0.3px),
+      /* Secondary diagonal cross matrix for depth */
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0.4px, transparent 0.4px),
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 0.2px, transparent 0.2px);
+    background-size: 20px 20px, 15px 15px, 25px 25px, 12px 12px;
+    background-position: 0 0, 7px 7px, 12px 12px, 3px 3px;
+  }
+
+  /* Headings use Roboto Slab */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
+  }
+
+  /* Light mode shadows for depth */
+  .light-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .light-shadow-lg {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Dark mode glow for depth */
+  .dark .dark-glow {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.05), 0 2px 8px rgba(255, 255, 255, 0.03);
+  }
+
+  .dark .dark-glow-lg {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.08), 0 4px 16px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Added glow effects for search box and favorites button */
+  .search-glow {
+    box-shadow: 0 0 0 1px rgba(30, 30, 28, 0.1), 0 0 20px rgba(30, 30, 28, 0.08), 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .search-glow:focus {
+    box-shadow: 0 0 0 2px rgba(30, 30, 28, 0.2), 0 0 30px rgba(30, 30, 28, 0.12), 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .favorites-glow {
+    box-shadow: 0 0 0 1px rgba(30, 30, 28, 0.1), 0 0 15px rgba(30, 30, 28, 0.06), 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .favorites-glow:hover {
+    box-shadow: 0 0 0 2px rgba(30, 30, 28, 0.15), 0 0 25px rgba(30, 30, 28, 0.1), 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .dark .search-glow {
+    box-shadow: 0 0 0 1px rgba(230, 230, 230, 0.1), 0 0 20px rgba(230, 230, 230, 0.08), 0 2px 8px
+      rgba(255, 255, 255, 0.03);
+  }
+
+  .dark .search-glow:focus {
+    box-shadow: 0 0 0 2px rgba(230, 230, 230, 0.2), 0 0 30px rgba(230, 230, 230, 0.12), 0 4px 16px
+      rgba(255, 255, 255, 0.05);
+  }
+
+  .dark .favorites-glow {
+    box-shadow: 0 0 0 1px rgba(230, 230, 230, 0.1), 0 0 15px rgba(230, 230, 230, 0.06), 0 2px 8px
+      rgba(255, 255, 255, 0.03);
+  }
+
+  .dark .favorites-glow:hover {
+    box-shadow: 0 0 0 2px rgba(230, 230, 230, 0.15), 0 0 25px rgba(230, 230, 230, 0.1), 0 4px 16px
+      rgba(255, 255, 255, 0.05);
+  }
+
+  /* Subtle texture patterns */
+  .texture-dots::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+  }
+
+  .dark .texture-dots::before {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  /* Removed diagonal texture pattern as requested */
+  .texture-diagonal::before {
+    display: none;
+  }
+
+  /* Gradients */
+  .gradient-light {
+    background: linear-gradient(135deg, #fafaf8 0%, #f2f2f0 100%);
+  }
+
+  .dark .gradient-dark {
+    background: linear-gradient(135deg, #262626 0%, #1f1f1f 100%);
+  }
+
+  /* Compact navigation buttons for chatbot page */
+  .compact-nav-button {
+    @apply h-8 px-3 text-xs opacity-60 hover:opacity-100 transition-all duration-300;
+  }
+
+  .compact-nav-button:hover {
+    @apply h-10 px-4 text-sm;
+  }
+}
