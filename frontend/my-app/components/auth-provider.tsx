@@ -3,6 +3,13 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import { 
+  signInWithPopup, 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged,
+  User as FirebaseUser 
+} from "firebase/auth"
+import { auth, googleProvider } from "@/lib/firebase"
 
 interface User {
   id: string
@@ -25,31 +32,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem("citesight-user")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    if (!auth) {
+      // Firebase not configured, check for existing session in localStorage
+      const storedUser = localStorage.getItem("citesight-user")
+      if (storedUser) {
+        setUser(JSON.parse(storedUser))
+      }
+      setLoading(false)
+      return
     }
-    setLoading(false)
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // Convert Firebase user to our User interface
+        const userData: User = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || "User",
+          email: firebaseUser.email || "",
+          image: firebaseUser.photoURL || undefined,
+        }
+        setUser(userData)
+        localStorage.setItem("citesight-user", JSON.stringify(userData))
+      } else {
+        setUser(null)
+        localStorage.removeItem("citesight-user")
+        localStorage.removeItem("citesight-favorites")
+        localStorage.removeItem("citesight-search-history")
+      }
+      setLoading(false)
+    })
+
+    return () => unsubscribe()
   }, [])
 
   const signIn = async () => {
-    // Mock Google OAuth - in production, integrate with actual Google OAuth
-    const mockUser: User = {
-      id: "1",
-      name: "John Researcher",
-      email: "john@example.com",
-      image: "/diverse-user-avatars.png",
+    if (!auth || !googleProvider) {
+      console.warn("Firebase is not configured. Please set up your Firebase credentials in .env.local")
+      setLoading(false)
+      return
     }
-    setUser(mockUser)
-    localStorage.setItem("citesight-user", JSON.stringify(mockUser))
+
+    try {
+      setLoading(true)
+      const result = await signInWithPopup(auth, googleProvider)
+      // The user state will be updated by the onAuthStateChanged listener
+    } catch (error) {
+      console.error("Error signing in:", error)
+      setLoading(false)
+    }
   }
 
   const signOut = async () => {
-    setUser(null)
-    localStorage.removeItem("citesight-user")
-    localStorage.removeItem("citesight-favorites")
-    localStorage.removeItem("citesight-search-history")
+    if (!auth) {
+      // Fallback to local sign out if Firebase is not configured
+      setUser(null)
+      localStorage.removeItem("citesight-user")
+      localStorage.removeItem("citesight-favorites")
+      localStorage.removeItem("citesight-search-history")
+      return
+    }
+
+    try {
+      await firebaseSignOut(auth)
+      // The user state will be updated by the onAuthStateChanged listener
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
   }
 
   return <AuthContext.Provider value={{ user, signIn, signOut, loading }}>{children}</AuthContext.Provider>

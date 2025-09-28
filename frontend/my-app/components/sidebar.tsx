@@ -99,19 +99,19 @@ export function Sidebar({ className }: SidebarProps) {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-12 rounded-lg light-shadow dark:dark-glow hover:bg-secondary/50 transition-all duration-200",
+                "w-full justify-start h-12 rounded-lg light-shadow dark:dark-glow hover:bg-secondary/50 transition-all duration-200 overflow-hidden",
                 !isHovered && "justify-center px-2"
               )}
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-3 w-full min-w-0">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-bold">
                     {user.name?.charAt(0).toUpperCase() || "U"}
                   </span>
                 </div>
                 {isHovered && (
-                  <div className="text-left">
-                    <div className="text-sm font-medium">{user.name}</div>
+                  <div className="text-left min-w-0 flex-1 overflow-hidden">
+                    <div className="text-sm font-medium truncate">{user.name}</div>
                     <div className="text-xs text-muted-foreground">Account</div>
                   </div>
                 )}
