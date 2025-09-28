@@ -65,7 +65,15 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="flex-1 px-4 py-2">
         <div className="space-y-3">
           {navigationItems
-            .filter(item => item.path !== pathname)
+            .filter(item => {
+              // Handle exact matches
+              if (item.path === pathname) return false
+              // Handle search results pages
+              if (item.path === "/search" && pathname.startsWith("/search")) return false
+              // Handle chat pages - don't show search when in chat
+              if (item.path === "/search" && pathname.startsWith("/chat")) return false
+              return true
+            })
             .map((item) => {
               const Icon = item.icon
               return (
