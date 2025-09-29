@@ -52,15 +52,10 @@ Built at **SunHacks 2025** for researchers, students, and curious minds by Anike
 3. **Set environment variables**
    ```bash
    GEMINI_API_KEY=your_api_key
-   NEXT_PUBLIC_API_URL=http://localhost:8000
    ```
 
 4. **Run the app**
    ```bash
-   # Backend
-   cd backend && python main.py
-
-   # Frontend
    cd frontend/my-app && bun dev
    ```
 
